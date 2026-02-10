@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
+import { useState } from 'react';
 
-// --- DATA PRODUK (Bisa kamu ubah nanti) ---
+// --- DATA PRODUK ---
 const products = [
   {
     id: 1,
@@ -66,7 +65,7 @@ export default function Home() {
     } else {
       setCart([...cart, { ...product, qty: 1 }]);
     }
-    setIsCartOpen(true); // Buka keranjang otomatis saat tambah barang
+    setIsCartOpen(true);
   };
 
   // Fungsi Kurangi/Hapus Item
@@ -85,19 +84,15 @@ export default function Home() {
     });
     message += `%0A*Total: Rp ${totalAmount}*`;
     message += "%0A%0AMohon info ongkir ke alamat saya.";
-    window.open(`https://wa.me/6282114596083?text=${message}`, '_blank');
+    window.open(`https://wa.me/6281234567890?text=${message}`, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Head>
-        <title>Rumah Alkaline | Solusi Air Sehat</title>
-      </Head>
-
+      
       {/* --- NAVBAR --- */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md shadow-sm z-50 transition-all duration-300">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* Logo Keren */}
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-br from-blue-500 to-cyan-400 p-2 rounded-lg shadow-lg">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +105,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tombol Keranjang */}
           <button 
             onClick={() => setIsCartOpen(!isCartOpen)} 
             className="relative p-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
@@ -127,9 +121,8 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* --- HERO SECTION (OPENING) --- */}
+      {/* --- HERO SECTION --- */}
       <header className="relative pt-32 pb-20 px-4 overflow-hidden">
-        {/* Background Blob Decoration */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10"></div>
 
@@ -155,7 +148,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- SECTION EDUKASI / IKLAN --- */}
+      {/* --- EDUKASI --- */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -205,7 +198,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- DAFTAR PRODUK (KATALOG) --- */}
+      {/* --- PRODUK --- */}
       <section id="produk" className="py-20 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -216,7 +209,6 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {products.map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group">
-                {/* Gambar Produk */}
                 <div 
                   className="relative h-48 overflow-hidden cursor-pointer"
                   onClick={() => setSelectedProduct(product)}
@@ -229,13 +221,8 @@ export default function Home() {
                   <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-md text-slate-700 shadow-sm">
                     {product.category}
                   </div>
-                  {/* Overlay Click Hint */}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium">
-                    Klik untuk Detail
-                  </div>
                 </div>
 
-                {/* Info Produk */}
                 <div className="p-4 flex flex-col flex-grow">
                   <h3 
                     className="font-bold text-lg text-slate-800 mb-1 cursor-pointer hover:text-blue-600"
@@ -265,7 +252,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- POPUP DETAIL PRODUK (MODAL) --- */}
+      {/* --- POPUP DETAIL --- */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
@@ -303,7 +290,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- KERANJANG BELANJA (SIDEBAR) --- */}
+      {/* --- KERANJANG --- */}
       <div className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
@@ -365,11 +352,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- FOOTER WARNA-WARNI --- */}
+      {/* --- FOOTER --- */}
       <footer className="bg-slate-900 text-white pt-16 pb-8 rounded-t-[3rem] mt-12">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-12 mb-12">
-            {/* Kolom 1 */}
             <div>
               <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center gap-2">
                 Rumah Alkaline 💧
@@ -378,7 +364,6 @@ export default function Home() {
                 Kami berkomitmen menyediakan air minum berkualitas tinggi dengan standar kebersihan terbaik untuk kesehatan keluarga Indonesia.
               </p>
             </div>
-            {/* Kolom 2 */}
             <div>
               <h3 className="text-xl font-bold text-emerald-400 mb-4">📍 Lokasi Outlet</h3>
               <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
@@ -387,7 +372,6 @@ export default function Home() {
                 <a href="#" className="text-blue-400 text-sm mt-2 inline-block hover:underline">Lihat di Google Maps →</a>
               </div>
             </div>
-            {/* Kolom 3 */}
             <div>
               <h3 className="text-xl font-bold text-yellow-400 mb-4">🕒 Jam Operasional</h3>
               <ul className="space-y-3">
