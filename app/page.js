@@ -9,7 +9,7 @@ const products = [
     price: 7000,
     category: "Ekonomis",
     hasPoints: true, // INI DAPAT POIN
-    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800",
+    image: "/organik.jpg",
     desc: "Air minum ekonomis untuk kebutuhan harian.",
     details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
   },
@@ -19,7 +19,7 @@ const products = [
     price: 19000,
     category: "Premium",
     hasPoints: false,
-    image: "https://images.unsplash.com/photo-1564419320461-6870880221ad?auto=format&fit=crop&q=80&w=800",
+    image: "/suli,jpg",
     desc: "Kesegaran alami langsung dari sumber pegunungan.",
     details: "Diambil langsung dari mata air pegunungan terpilih. Mengandung mineral alami yang menyegarkan dahaga seketika. Rasanya dingin alami!"
   },
@@ -29,7 +29,7 @@ const products = [
     price: 15000,
     category: "Best Seller",
     hasPoints: true, // INI DAPAT POIN
-    image: "https://images.unsplash.com/photo-1616118132534-381148898bb8?auto=format&fit=crop&q=80&w=800",
+    image: "/deo.jpg",
     desc: "Air beroksigen tinggi untuk energi ekstra.",
     details: "Diproses dengan teknologi Oxygenated Water. Meningkatkan kadar oksigen dalam darah, membantu fokus, dan menghilangkan kantuk. Favorit pelanggan!"
   },
@@ -39,7 +39,7 @@ const products = [
     price: 15000,
     category: "Keluarga",
     hasPoints: false,
-    image: "https://images.unsplash.com/photo-1523362628408-3c7eda8fa647?auto=format&fit=crop&q=80&w=800",
+    image: "/s+,jpg",
     desc: "Air sehat seimbang untuk seluruh keluarga.",
     details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
   },
@@ -49,7 +49,7 @@ const products = [
     price: 15000,
     category: "Kesehatan",
     hasPoints: false,
-    image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f?auto=format&fit=crop&q=80&w=800",
+    image: "/telaga.jpg",
     desc: "pH Tinggi untuk detoksifikasi tubuh.",
     details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung, mendetoks racun dalam tubuh, dan menjaga vitalitas. Solusi hidup sehat."
   }
@@ -189,7 +189,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
               <img 
-                src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800" 
+                src="/iklan.jpg" 
                 alt="Air Sehat" 
                 className="w-full h-[400px] object-cover transform group-hover:scale-105 transition-transform duration-700"
               />
