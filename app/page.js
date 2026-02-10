@@ -1,397 +1,206 @@
 "use client";
-import { useState } from 'react';
 
-// --- DATA PRODUK ---
-const products = [
-  {
-    id: 1,
-    name: "Organik (RO)",
-    price: 7000,
-    category: "Ekonomis",
-    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800",
-    desc: "Air minum ekonomis untuk kebutuhan harian.",
-    details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
-  },
-  {
-    id: 2,
-    name: "Suli (Pegunungan)",
-    price: 19000,
-    category: "Premium",
-    image: "https://images.unsplash.com/photo-1564419320461-6870880221ad?auto=format&fit=crop&q=80&w=800",
-    desc: "Kesegaran alami langsung dari sumber pegunungan.",
-    details: "Diambil langsung dari mata air pegunungan terpilih. Mengandung mineral alami yang menyegarkan dahaga seketika. Rasanya dingin alami!"
-  },
-  {
-    id: 3,
-    name: "Deo (Oxy)",
-    price: 15000,
-    category: "Best Seller",
-    image: "https://images.unsplash.com/photo-1616118132534-381148898bb8?auto=format&fit=crop&q=80&w=800",
-    desc: "Air beroksigen tinggi untuk energi ekstra.",
-    details: "Diproses dengan teknologi Oxygenated Water. Meningkatkan kadar oksigen dalam darah, membantu fokus, dan menghilangkan kantuk. Favorit pelanggan!"
-  },
-  {
-    id: 4,
-    name: "S+ (Sehat)",
-    price: 15000,
-    category: "Keluarga",
-    image: "https://images.unsplash.com/photo-1523362628408-3c7eda8fa647?auto=format&fit=crop&q=80&w=800",
-    desc: "Air sehat seimbang untuk seluruh keluarga.",
-    details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
-  },
-  {
-    id: 5,
-    name: "Telaga 8+ (Alkaline)",
-    price: 15000,
-    category: "Kesehatan",
-    image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f?auto=format&fit=crop&q=80&w=800",
-    desc: "pH Tinggi untuk detoksifikasi tubuh.",
-    details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung, mendetoks racun dalam tubuh, dan menjaga vitalitas. Solusi hidup sehat."
-  }
-];
+import React from 'react';
 
 export default function Home() {
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // Fungsi Tambah ke Keranjang
-  const addToCart = (product) => {
-    const existingItem = cart.find((item) => item.id === product.id);
-    if (existingItem) {
-      setCart(cart.map((item) =>
-        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-      ));
-    } else {
-      setCart([...cart, { ...product, qty: 1 }]);
+  // Data Produk (Aku tandain mana yang dapet kupon/poin)
+  const products = [
+    {
+      id: 1,
+      name: "Organik (RO)",
+      description: "Air minum ekonomis untuk kebutuhan harian.",
+      price: 7000,
+      tag: "Ekonomis",
+      hasPoints: true, // INI DAPAT POIN
+      image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: 2,
+      name: "Suli (Pegunungan)",
+      description: "Kesegaran alami langsung dari sumber pegunungan.",
+      price: 19000,
+      tag: "Premium",
+      hasPoints: false,
+      image: "https://images.unsplash.com/photo-1560023907-5f339617ea30?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: 3,
+      name: "Deo (Oxy)",
+      description: "Air beroksigen tinggi untuk energi ekstra.",
+      price: 15000,
+      tag: "Best Seller",
+      hasPoints: true, // INI DAPAT POIN
+      image: "https://images.unsplash.com/photo-1523362628408-3c2601a0d057?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: 4,
+      name: "S+ (Sehat)",
+      description: "Air sehat seimbang untuk seluruh keluarga.",
+      price: 15000,
+      tag: "Keluarga",
+      hasPoints: false,
+      image: "https://images.unsplash.com/photo-1538300342682-cf57afb97285?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: 5,
+      name: "Telaga 8+ (Alkaline)",
+      description: "pH Tinggi untuk detoksifikasi tubuh.",
+      price: 15000,
+      tag: "Kesehatan",
+      hasPoints: false,
+      image: "https://images.unsplash.com/photo-1589365278144-96e3a94149a7?auto=format&fit=crop&q=80&w=800"
     }
-    setIsCartOpen(true);
-  };
+  ];
 
-  // Fungsi Kurangi/Hapus Item
-  const removeFromCart = (productId) => {
-    setCart(cart.filter((item) => item.id !== productId));
-  };
+  // Fungsi untuk kirim pesan WhatsApp
+  const handleOrder = (product) => {
+    const phoneNumber = "6282258521615"; // Nomor HP dari kupon
+    
+    let message = `Halo Rumah Alkaline, saya mau pesan *${product.name}* seharga Rp ${product.price.toLocaleString('id-ID')}.`;
 
-  // Hitung Total Harga
-  const totalAmount = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+    // Kalau produk ini ada poinnya, tambah pesan khusus
+    if (product.hasPoints) {
+      message += `\n\n(🎟️ Tolong catat poin kupon digital saya ya kak)`;
+    }
 
-  // Buat Link WhatsApp Otomatis
-  const handleCheckout = () => {
-    let message = "Halo Admin Rumah Alkaline, saya mau pesan:%0A";
-    cart.forEach((item) => {
-      message += `- ${item.name} (${item.qty}x): Rp ${item.price * item.qty}%0A`;
-    });
-    message += `%0A*Total: Rp ${totalAmount}*`;
-    message += "%0A%0AMohon info ongkir ke alamat saya.";
-    window.open(`https://wa.me/6282114596083?text=${message}`, '_blank');
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
       
-      {/* --- NAVBAR --- */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md shadow-sm z-50 transition-all duration-300">
+      {/* Navbar Sederhana */}
+      <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-400 p-2 rounded-lg shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800 tracking-tight">Rumah<span className="text-blue-500">Alkaline</span></h1>
-              <p className="text-[10px] text-slate-500 font-medium tracking-wider">PREMIUM WATER STORE</p>
-            </div>
+            <h1 className="text-xl font-bold text-blue-600">Rumah Alkaline 💧</h1>
           </div>
-
-          <button 
-            onClick={() => setIsCartOpen(!isCartOpen)} 
-            className="relative p-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full animate-bounce">
-                {cart.reduce((a, b) => a + b.qty, 0)}
-              </span>
-            )}
-          </button>
+          <div className="flex gap-4 text-sm font-medium text-gray-500">
+            <a href="#" className="hover:text-blue-600">Beranda</a>
+            <a href="#produk" className="hover:text-blue-600">Harga</a>
+            <a href="#lokasi" className="hover:text-blue-600">Lokasi</a>
+          </div>
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
-      <header className="relative pt-32 pb-20 px-4 overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10"></div>
-
-        <div className="container mx-auto text-center max-w-4xl">
-          <span className="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold mb-4 animate-fade-in-up">
-            👋 Selamat Datang, Sahabat Sehat!
-          </span>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
-            Mulai Hidup Sehat dari <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-              Setetes Air Berkualitas
-            </span>
-          </h1>
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
+      {/* Hero Section */}
+      <header className="bg-white py-16 px-4 text-center">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">
+            Selamat Datang di Rumah Alkaline
+          </h2>
+          <p className="text-lg text-gray-600 mb-8">
+            Pilihan air minum sehat terlengkap untuk keluarga Anda.<br/>
+            <strong>Segar, Sehat, dan Terjangkau.</strong>
           </p>
-          <button 
-            onClick={() => document.getElementById('produk').scrollIntoView({ behavior: 'smooth' })}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-bold shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-1 transition-all"
-          >
-            Lihat Pilihan Air 💧
-          </button>
+
+          {/* === INI BAGIAN BARU: INFO KUPON DIGITAL === */}
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-10 max-w-2xl mx-auto relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              PROMO
+            </div>
+            <h3 className="text-xl font-bold text-yellow-800 mb-2">🎉 Program Loyalitas Pelanggan</h3>
+            <p className="text-yellow-900 mb-4">
+              Setiap pembelian <strong>Organik (RO)</strong> & <strong>Deo (Oxy)</strong> akan mendapatkan Poin Digital!
+            </p>
+            <div className="inline-block bg-white px-6 py-2 rounded-full shadow-sm border border-yellow-200">
+              <span className="font-bold text-yellow-700">10 Poin = Gratis 1 Galon! 🎁</span>
+            </div>
+          </div>
+          {/* =========================================== */}
+
         </div>
       </header>
 
-      {/* --- EDUKASI --- */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-              <img 
-                src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800" 
-                alt="Air Sehat" 
-                className="w-full h-[400px] object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
-                <p className="text-white font-medium text-lg">"Tubuh manusia 70% adalah air. Jangan isi dengan yang sembarangan."</p>
+      {/* Product List */}
+      <section id="produk" className="container mx-auto px-4 py-12">
+        <h3 className="text-2xl font-bold text-center mb-2 text-gray-800">Pilih Kesegaran Anda</h3>
+        <p className="text-center text-gray-500 mb-10">Klik tombol (+) untuk pesan & dapatkan poinnya.</p>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          {products.map((product) => (
+            <div key={product.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col border border-gray-100 relative">
+              
+              {/* Badge Poin (Muncul kalau hasPoints = true) */}
+              {product.hasPoints && (
+                <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                  🎟️ Dapat Poin
+                </div>
+              )}
+
+              {/* Tag di pojok kanan */}
+              <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur text-gray-700 text-xs font-bold px-2 py-1 rounded shadow-sm">
+                {product.tag}
               </div>
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-800 mb-6">Kenapa Harus Rumah Alkaline?</h2>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">
-                    ✨
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">Teknologi Filtrasi Terbaik</h3>
-                    <p className="text-slate-600">Menyaring partikel berbahaya namun tetap mempertahankan mineral baik.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 flex-shrink-0">
-                    🛡️
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">Bebas Bakteri & Higienis</h3>
-                    <p className="text-slate-600">Galon dicuci dengan sterilisasi tinggi sebelum pengisian.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
-                    ⚡
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">pH Seimbang (Alkaline)</h3>
-                    <p className="text-slate-600">Membantu menetralkan keasaman tubuh akibat makanan cepat saji.</p>
-                  </div>
-                </div>
+
+              <div className="h-48 overflow-hidden relative bg-gray-100">
+                 <img 
+                  src={product.image} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* --- PRODUK --- */}
-      <section id="produk" className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">Pilih Kesegaran Anda</h2>
-            <p className="text-slate-500">Klik produk untuk melihat detail khasiatnya.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group">
-                <div 
-                  className="relative h-48 overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedProduct(product)}
-                >
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-md text-slate-700 shadow-sm">
-                    {product.category}
-                  </div>
-                </div>
-
-                <div className="p-4 flex flex-col flex-grow">
-                  <h3 
-                    className="font-bold text-lg text-slate-800 mb-1 cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedProduct(product)}
+              <div className="p-5 flex flex-col flex-grow">
+                <h4 className="text-lg font-bold text-gray-800 mb-1">{product.name}</h4>
+                <p className="text-sm text-gray-500 mb-4 flex-grow">{product.description}</p>
+                
+                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+                  <span className="text-xl font-bold text-blue-600">
+                    Rp {product.price.toLocaleString('id-ID')}
+                  </span>
+                  <button 
+                    onClick={() => handleOrder(product)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-colors shadow-blue-200 shadow-lg"
                   >
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-slate-500 mb-4 line-clamp-2">{product.desc}</p>
-                  
-                  <div className="mt-auto flex items-center justify-between">
-                    <span className="text-blue-600 font-bold text-lg">
-                      Rp {product.price.toLocaleString('id-ID')}
-                    </span>
-                    <button 
-                      onClick={() => addToCart(product)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
+                    <span className="text-2xl font-light mb-1">+</span>
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* --- POPUP DETAIL --- */}
-      {selectedProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-56 object-cover" />
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-800">{selectedProduct.name}</h3>
-                  <span className="text-sm text-blue-600 font-medium">{selectedProduct.category}</span>
-                </div>
-                <span className="text-xl font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
-                  Rp {selectedProduct.price.toLocaleString()}
-                </span>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
-                <h4 className="font-bold text-blue-800 mb-1 text-sm">💡 Khasiat & Kandungan:</h4>
-                <p className="text-slate-700 text-sm leading-relaxed">{selectedProduct.details}</p>
-              </div>
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setSelectedProduct(null)}
-                  className="flex-1 py-3 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  Tutup
-                </button>
-                <button 
-                  onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors"
-                >
-                  + Keranjang
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- KERANJANG --- */}
-      <div className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex flex-col h-full">
-          <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              🛒 Keranjang Belanja
-            </h2>
-            <button onClick={() => setIsCartOpen(false)} className="text-slate-400 hover:text-red-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            {cart.length === 0 ? (
-              <div className="text-center text-slate-400 mt-20">
-                <p className="mb-2">Keranjang masih kosong 😔</p>
-                <button onClick={() => setIsCartOpen(false)} className="text-blue-600 font-bold hover:underline">Yuk pilih produk dulu!</button>
-              </div>
-            ) : (
-              cart.map((item) => (
-                <div key={item.id} className="flex gap-4 items-center bg-white border p-3 rounded-lg shadow-sm">
-                  <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover" />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-slate-800 text-sm">{item.name}</h4>
-                    <p className="text-blue-600 font-bold text-sm">Rp {(item.price * item.qty).toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-600 font-bold text-sm">{item.qty}x</span>
-                    <button 
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {cart.length > 0 && (
-            <div className="p-5 border-t bg-slate-50">
-              <div className="flex justify-between mb-4">
-                <span className="text-slate-600 font-medium">Total Pembayaran</span>
-                <span className="text-2xl font-bold text-slate-900">Rp {totalAmount.toLocaleString()}</span>
-              </div>
-              <button 
-                onClick={handleCheckout}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all"
-              >
-                <span>Pesan via WhatsApp</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* --- FOOTER --- */}
-      <footer className="bg-slate-900 text-white pt-16 pb-8 rounded-t-[3rem] mt-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12 mb-12">
-            <div>
-              <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center gap-2">
-                Rumah Alkaline 💧
-              </h2>
-              <p className="text-slate-400 leading-relaxed">
-                Kami berkomitmen menyediakan air minum berkualitas tinggi dengan standar kebersihan terbaik untuk kesehatan keluarga Indonesia.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-emerald-400 mb-4">📍 Lokasi Outlet</h3>
-              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <p className="font-medium text-white">Jl. Contoh Raya No. 123</p>
-                <p className="text-slate-400 text-sm">Kecamatan Air Bersih, Kota Sejahtera</p>
-                <a href="#" className="text-blue-400 text-sm mt-2 inline-block hover:underline">Lihat di Google Maps →</a>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-yellow-400 mb-4">🕒 Jam Operasional</h3>
-              <ul className="space-y-3">
-                <li className="flex justify-between items-center border-b border-slate-700 pb-2">
-                  <span className="text-slate-300">Senin - Sabtu</span>
-                  <span className="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold">08.00 - 20.00</span>
-                </li>
-                <li className="flex justify-between items-center border-b border-slate-700 pb-2">
-                  <span className="text-slate-300">Minggu</span>
-                  <span className="bg-orange-500 px-3 py-1 rounded-full text-xs font-bold">09.00 - 17.00</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-slate-800 pt-8 text-center">
-            <p className="text-slate-500 text-sm">
-              &copy; 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
+      {/* Footer / Lokasi */}
+      <footer id="lokasi" className="bg-gray-900 text-white py-12 mt-12 rounded-t-[3rem]">
+        <div className="container mx-auto px-6 grid md:grid-cols-3 gap-8">
+          <div>
+            <h4 className="text-xl font-bold mb-4 text-blue-400">Rumah Alkaline 💧</h4>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Kami berkomitmen menyediakan air minum berkualitas tinggi dengan standar kebersihan terbaik untuk kesehatan keluarga Indonesia.
             </p>
           </div>
+          
+          <div>
+            <h4 className="text-lg font-bold mb-4 text-green-400">📍 Lokasi Outlet</h4>
+            <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
+              <p className="font-bold text-white mb-1">JL Contoh Raya No. 123</p>
+              <p className="text-gray-400 text-sm mb-3">Kecamatan Air Bersih, Kota Sejahtera</p>
+              <a href="#" className="text-blue-400 text-sm hover:underline flex items-center gap-1">
+                Lihat di Google Maps &rarr;
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-bold mb-4 text-yellow-400">🕒 Jam Operasional</h4>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li className="flex justify-between">
+                <span>Senin - Sabtu</span>
+                <span className="font-bold bg-blue-600 px-2 rounded">08.00 - 20.00</span>
+              </li>
+              <li className="flex justify-between border-t border-gray-700 pt-2 mt-2">
+                <span>Minggu</span>
+                <span className="font-bold bg-orange-500 px-2 rounded">09.00 - 17.00</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="text-center text-gray-600 text-xs mt-12 pt-8 border-t border-gray-800">
+          &copy; 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
         </div>
       </footer>
     </div>
