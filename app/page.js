@@ -19,7 +19,7 @@ const products = [
     price: 19000,
     category: "Premium",
     hasPoints: false,
-    image: "/suli,jpg",
+    image: "/suli.jpg",
     desc: "Kesegaran alami langsung dari sumber pegunungan.",
     details: "Diambil langsung dari mata air pegunungan terpilih. Mengandung mineral alami yang menyegarkan dahaga seketika. Rasanya dingin alami!"
   },
@@ -39,7 +39,7 @@ const products = [
     price: 15000,
     category: "Keluarga",
     hasPoints: false,
-    image: "/s+,jpg",
+    image: "/s+.jpg",
     desc: "Air sehat seimbang untuk seluruh keluarga.",
     details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
   },
