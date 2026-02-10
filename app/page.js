@@ -101,7 +101,7 @@ export default function Home() {
       message += "%0A%0A(🎟️ Mohon catat poin kupon digital saya untuk pembelian produk berlabel poin)";
     }
 
-    window.open(`https://wa.me/6281234567890?text=${message}`, '_blank');
+    window.open(`https://wa.me/6282114596083?text=${message}`, '_blank');
   };
 
   return (
