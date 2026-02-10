@@ -1,14 +1,14 @@
 "use client";
-import { useState } from 'react';
+import React, { useState } from 'react'; // Pastikan import React lengkap
 
-// --- DATA PRODUK (Sudah ditambah info 'hasPoints') ---
+// --- DATA PRODUK ---
 const products = [
   {
     id: 1,
     name: "Organik (RO)",
     price: 7000,
     category: "Ekonomis",
-    hasPoints: true, // INI DAPAT POIN
+    hasPoints: true,
     image: "/organik.jpg",
     desc: "Air minum ekonomis untuk kebutuhan harian.",
     details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
@@ -28,7 +28,7 @@ const products = [
     name: "Deo (Oxy)",
     price: 15000,
     category: "Best Seller",
-    hasPoints: true, // INI DAPAT POIN
+    hasPoints: true,
     image: "/deo.jpg",
     desc: "Air beroksigen tinggi untuk energi ekstra.",
     details: "Diproses dengan teknologi Oxygenated Water. Meningkatkan kadar oksigen dalam darah, membantu fokus, dan menghilangkan kantuk. Favorit pelanggan!"
@@ -57,6 +57,11 @@ const products = [
 
 export default function Home() {
   const [cart, setCart] = useState([]);
+  
+  // STATE PEMBAYARAN
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // Default bayar cash
+  const [cashNote, setCashNote] = useState(""); // Buat catat uang pecahan
+  
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -81,27 +86,35 @@ export default function Home() {
   // Hitung Total Harga
   const totalAmount = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  // Buat Link WhatsApp Otomatis (CANGGIH: Cek Poin)
+  // --- FUNGSI CHECKOUT / KIRIM WA (INI YANG DIPERBAIKI) ---
   const handleCheckout = () => {
-    let message = "Halo Admin Rumah Alkaline, saya mau pesan:%0A";
-    let hasPointsItem = false;
+    // 1. Susun Daftar Item
+    const itemsText = cart
+      .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
+      .join('\n');
 
-    cart.forEach((item) => {
-      message += `- ${item.name} (${item.qty}x): Rp ${(item.price * item.qty).toLocaleString('id-ID')}%0A`;
-      if (item.hasPoints) {
-        hasPointsItem = true;
-      }
-    });
-    
-    message += `%0A*Total: Rp ${totalAmount.toLocaleString('id-ID')}*`;
-    message += "%0A%0AMohon info ongkir ke alamat saya.";
-
-    // Tambah pesan khusus jika ada item berpoin di keranjang
-    if (hasPointsItem) {
-      message += "%0A%0A(🎟️ Mohon catat poin kupon digital saya untuk pembelian produk berlabel poin)";
+    // 2. Susun Info Pembayaran
+    let paymentInfo = "";
+    if (paymentMethod === "cash") {
+      paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
+    } else if (paymentMethod === "transfer") {
+      paymentInfo = "Transfer (Minta Rekening/QRIS)";
+    } else if (paymentMethod === "tempo") {
+      paymentInfo = "Tempo/Bayar Bulanan (Khusus Member)";
     }
 
-    window.open(`https://wa.me/6282114596083?text=${message}`, '_blank');
+    // 3. Cek Poin
+    const hasPointsItem = cart.some((item) => item.hasPoints);
+    let pointsMsg = "";
+    if (hasPointsItem) {
+      pointsMsg = "\n\n(🎟️ Mohon catat poin kupon digital saya untuk pembelian produk berlabel poin)";
+    }
+
+    // 4. Gabungkan Pesan
+    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Total: Rp ${totalAmount.toLocaleString('id-ID')}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n📝 Detail: ${paymentInfo}\n----------------\n\nMohon info ongkir ke alamat saya.${pointsMsg}`;
+
+    // 5. Kirim ke WA
+    window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
@@ -157,7 +170,7 @@ export default function Home() {
             Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
           </p>
 
-          {/* === BANNER PROMO (BARU) === */}
+          {/* === BANNER PROMO === */}
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 mb-10 max-w-2xl mx-auto relative overflow-hidden shadow-lg animate-bounce-slow">
             <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-4 py-1 rounded-bl-xl shadow-sm">
               PROMO SPESIAL
@@ -172,7 +185,6 @@ export default function Home() {
               <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Gratis 1 Galon! 🎁</span>
             </div>
           </div>
-          {/* ========================== */}
 
           <button 
             onClick={() => document.getElementById('produk').scrollIntoView({ behavior: 'smooth' })}
@@ -201,27 +213,21 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-slate-800 mb-6">Kenapa Harus Rumah Alkaline?</h2>
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">
-                    ✨
-                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">✨</div>
                   <div>
                     <h3 className="font-bold text-lg text-slate-800">Teknologi Filtrasi Terbaik</h3>
                     <p className="text-slate-600">Menyaring partikel berbahaya namun tetap mempertahankan mineral baik.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 flex-shrink-0">
-                    🛡️
-                  </div>
+                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 flex-shrink-0">🛡️</div>
                   <div>
                     <h3 className="font-bold text-lg text-slate-800">Bebas Bakteri & Higienis</h3>
                     <p className="text-slate-600">Galon dicuci dengan sterilisasi tinggi sebelum pengisian.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
-                    ⚡
-                  </div>
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">⚡</div>
                   <div>
                     <h3 className="font-bold text-lg text-slate-800">pH Seimbang (Alkaline)</h3>
                     <p className="text-slate-600">Membantu menetralkan keasaman tubuh akibat makanan cepat saji.</p>
@@ -245,13 +251,11 @@ export default function Home() {
             {products.map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
                 
-                {/* === BADGE POIN (BARU) === */}
                 {product.hasPoints && (
                   <div className="absolute top-3 left-3 z-20 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
                     🎟️ Dapat Poin
                   </div>
                 )}
-                {/* ========================= */}
 
                 <div 
                   className="relative h-48 overflow-hidden cursor-pointer"
@@ -301,7 +305,6 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-fade-in relative" onClick={(e) => e.stopPropagation()}>
             
-            {/* Badge Poin di Popup juga */}
             {selectedProduct.hasPoints && (
                   <div className="absolute top-3 left-3 z-20 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                     🎟️ Produk Ini Dapat Poin!
@@ -342,7 +345,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- KERANJANG --- */}
+      {/* --- KERANJANG (SIDEBAR) --- */}
       <div className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
@@ -356,6 +359,7 @@ export default function Home() {
             </button>
           </div>
 
+          {/* LIST ITEM */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {cart.length === 0 ? (
               <div className="text-center text-slate-400 mt-20">
@@ -365,7 +369,6 @@ export default function Home() {
             ) : (
               cart.map((item) => (
                 <div key={item.id} className="flex gap-4 items-center bg-white border p-3 rounded-lg shadow-sm relative overflow-hidden">
-                  {/* Indikator Poin di Keranjang */}
                   {item.hasPoints && (
                     <div className="absolute top-0 left-0 bg-yellow-400 w-1 h-full"></div>
                   )}
@@ -394,12 +397,41 @@ export default function Home() {
             )}
           </div>
 
+          {/* BAGIAN BAWAH KERANJANG (PEMBAYARAN & TOTAL) */}
           {cart.length > 0 && (
-            <div className="p-5 border-t bg-slate-50">
-              <div className="flex justify-between mb-4">
+            <div className="p-5 border-t bg-slate-50 space-y-4">
+              
+              {/* --- 2. PILIHAN METODE PEMBAYARAN (BARU DITAMBAHKAN DISINI) --- */}
+              <div className="bg-white p-3 rounded-lg border border-slate-200">
+                <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Pembayaran:</label>
+                <select 
+                  value={paymentMethod} 
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-md mb-2 text-sm"
+                >
+                  <option value="cash">💵 Tunai (COD)</option>
+                  <option value="transfer">💳 Transfer Bank / QRIS</option>
+                  <option value="tempo">📒 Tempo (Khusus Member)</option>
+                </select>
+
+                {/* Input Tambahan jika Cash */}
+                {paymentMethod === 'cash' && (
+                  <input 
+                    type="text" 
+                    placeholder="Uang pecahan berapa? (Misal: 50rb)" 
+                    value={cashNote}
+                    onChange={(e) => setCashNote(e.target.value)}
+                    className="w-full p-2 border border-slate-300 rounded-md text-sm bg-slate-50"
+                  />
+                )}
+              </div>
+              {/* ------------------------------------------------------------- */}
+
+              <div className="flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Total Pembayaran</span>
                 <span className="text-2xl font-bold text-slate-900">Rp {totalAmount.toLocaleString()}</span>
               </div>
+              
               <button 
                 onClick={handleCheckout}
                 className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all"
