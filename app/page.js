@@ -91,7 +91,7 @@ export default function Home() {
 
  // --- PENGATURAN TOKO (SAKLAR DARURAT) ---
   // Ubah false jadi true kalau mau TUTUP SEHARIAN/MENDADAK
-  const isLiburMendadak = true; 
+  const isLiburMendadak = false; 
 
   // --- CEK JAM KERJA ---
   const jamSekarang = new Date().getHours();
