@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react'; // Pastikan import React lengkap
+import React, { useState } from 'react';
 
 // --- DATA PRODUK ---
 const products = [
@@ -59,12 +59,15 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   
   // STATE PEMBAYARAN
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // Default bayar cash
-  const [cashNote, setCashNote] = useState(""); // Buat catat uang pecahan
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [cashNote, setCashNote] = useState("");
   
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // --- FITUR BARU: STATE JAM PENGANTARAN ---
+  const [deliveryTime, setDeliveryTime] = useState("secepatnya"); // Default: Kirim Sekarang
+  
   // Fungsi Tambah ke Keranjang
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
@@ -86,13 +89,13 @@ export default function Home() {
   // Hitung Total Harga
   const totalAmount = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  // --- TAMBAHAN BARU: CEK JAM KERJA ---
-  const jamSekarang = new Date().getHours(); // Ambil jam di HP pembeli (0-23)
+  // --- CEK JAM KERJA ---
+  const jamSekarang = new Date().getHours();
   const jamBuka = 8;  // Jam 8 Pagi
   const jamTutup = 21; // Jam 9 Malam
   const isTokoBuka = jamSekarang >= jamBuka && jamSekarang < jamTutup;
 
-  // --- FUNGSI CHECKOUT / KIRIM WA (INI YANG DIPERBAIKI) ---
+  // --- FUNGSI CHECKOUT / KIRIM WA (SUDAH DIPERBAIKI) ---
   const handleCheckout = () => {
     // 1. Susun Daftar Item
     const itemsText = cart
@@ -116,8 +119,12 @@ export default function Home() {
       pointsMsg = "\n\n(🎟️ Mohon catat poin kupon digital saya untuk pembelian produk berlabel poin)";
     }
 
-    // 4. Gabungkan Pesan
-    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Total: Rp ${totalAmount.toLocaleString('id-ID')}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n📝 Detail: ${paymentInfo}\n----------------\n\nMohon info ongkir ke alamat saya.${pointsMsg}`;
+    // 4. Gabungkan Pesan (UPDATE: ADA JAM PENGANTARAN)
+    const timeInfo = deliveryTime === "secepatnya" 
+      ? "SECEPATNYA (Saat ini juga)" 
+      : `JAM ${deliveryTime}`;
+
+    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Total: Rp ${totalAmount.toLocaleString('id-ID')}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}\n----------------\n\nMohon info ongkir ke alamat saya.${pointsMsg}`;
 
     // 5. Kirim ke WA
     window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
@@ -407,7 +414,7 @@ export default function Home() {
           {cart.length > 0 && (
             <div className="p-5 border-t bg-slate-50 space-y-4">
               
-              {/* --- 2. PILIHAN METODE PEMBAYARAN (BARU DITAMBAHKAN DISINI) --- */}
+              {/* --- PILIHAN METODE PEMBAYARAN --- */}
               <div className="bg-white p-3 rounded-lg border border-slate-200">
                 <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Pembayaran:</label>
                 <select 
@@ -431,9 +438,30 @@ export default function Home() {
                   />
                 )}
               </div>
-              {/* ------------------------------------------------------------- */}
 
-              <div className="flex justify-between items-center">
+              {/* --- FITUR BARU: PILIH JAM PENGANTARAN --- */}
+              <div className="bg-white p-3 rounded-lg border border-slate-200 mt-2">
+                <label className="block text-sm font-bold text-slate-700 mb-2">Mau Diantar Jam Berapa?</label>
+                <select 
+                  value={deliveryTime} 
+                  onChange={(e) => setDeliveryTime(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-md text-sm"
+                >
+                  <option value="secepatnya">🚀 Kirim Sekarang (Secepatnya)</option>
+                  <option disabled>--- Pilih Jam ---</option>
+                  {[...Array(13)].map((_, i) => {
+                    const jam = 8 + i; 
+                    if (jam > 20) return null; 
+                    return (
+                      <option key={jam} value={`${jam}.00 - ${jam + 1}.00`}>
+                        {jam < 10 ? `0${jam}` : jam}.00 - {jam + 1 < 10 ? `0${jam + 1}` : jam + 1}.00
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+
+              <div className="flex justify-between items-center mt-4">
                 <span className="text-slate-600 font-medium">Total Pembayaran</span>
                 <span className="text-2xl font-bold text-slate-900">Rp {totalAmount.toLocaleString()}</span>
               </div>
@@ -498,7 +526,7 @@ export default function Home() {
           
           <div className="border-t border-slate-800 pt-8 text-center">
             <p className="text-slate-500 text-sm">
-              &copy; 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
+              © 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
             </p>
           </div>
         </div>
