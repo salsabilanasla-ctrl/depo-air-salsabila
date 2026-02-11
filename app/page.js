@@ -447,7 +447,7 @@ export default function Home() {
                   onChange={(e) => setDeliveryTime(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-md text-sm"
                 >
-                  <option value="secepatnya">🚀 Kirim Sekarang (Secepatnya)</option>
+                  <option value="secepatnya">🚀 Kirim 1 jam setelah pemesanan</option>
                   <option disabled>--- Pilih Jam ---</option>
                   {[...Array(13)].map((_, i) => {
                     const jam = 8 + i; 
