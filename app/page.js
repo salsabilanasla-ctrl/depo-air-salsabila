@@ -89,6 +89,11 @@ export default function Home() {
   // Hitung Total Harga
   const totalAmount = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
+  // --- 👇 TAMBAHAN BARU (SATPAM POIN) 👇 ---
+  // Cek: Apakah SEMUA barang di keranjang punya label "hasPoints: true"?
+  // Kalau ada satu saja barang mahal (hasPoints: false), maka GAK BOLEH tukar poin.
+  const isBisaTukarPoin = cart.length > 0 && cart.every((item) => item.hasPoints);
+
  // --- PENGATURAN TOKO (SAKLAR DARURAT) ---
   // Ubah false jadi true kalau mau TUTUP SEHARIAN/MENDADAK
   const isLiburMendadak = false; 
@@ -116,6 +121,8 @@ export default function Home() {
       paymentInfo = "Transfer (Minta Rekening/QRIS)";
     } else if (paymentMethod === "tempo") {
       paymentInfo = "Tempo/Bayar Bulanan (Khusus Member)";
+    } else if (paymentMethod === "tukar_poin") {
+      paymentInfo = "🎟️ TUKAR 10 POIN (Gratis 1 Galon) - Siapkan kupon/kartu poin";
     }
 
     // 3. Cek Poin
@@ -431,8 +438,23 @@ export default function Home() {
                   <option value="cash">💵 Tunai (COD)</option>
                   <option value="transfer">💳 Transfer Bank / QRIS</option>
                   <option value="tempo">📒 Tempo (Khusus Member)</option>
+                  {/* LOGIKA TUKAR POIN (UPDATE) */}
+                  <option value="tukar_poin" disabled={!isBisaTukarPoin}>
+                    {isBisaTukarPoin 
+                      ? "🎟️ Tukar 10 Poin (Gratis 1 Galon)" 
+                      : "🚫 Tukar Poin (Hanya utk Organik/Deo)"}
+                  </option>
                 </select>
 
+{/* 👇 TEMPEL KODENYA DI SINI (ANTARA SELECT DAN INPUT CASH) 👇 */}
+
+                {/* Peringatan kalau ada barang mahal */}
+                {!isBisaTukarPoin && cart.length > 0 && (
+                  <p className="text-xs text-red-500 mt-1 mb-2">
+                    *Menu "Tukar Poin" terkunci karena ada produk Premium di keranjang.
+                  </p>
+                )}
+                
                 {/* Input Tambahan jika Cash */}
                 {paymentMethod === 'cash' && (
                   <input 
