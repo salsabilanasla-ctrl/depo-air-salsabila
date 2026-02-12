@@ -68,6 +68,9 @@ export default function Home() {
   // --- FITUR BARU: STATE JAM PENGANTARAN ---
   const [deliveryTime, setDeliveryTime] = useState("secepatnya"); // Default: Kirim Sekarang
   
+  // State untuk centangan poin
+  const [isPakaiPoin, setIsPakaiPoin] = useState(false);
+
   // Fungsi Tambah ke Keranjang
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
@@ -86,13 +89,18 @@ export default function Home() {
     setCart(cart.filter((item) => item.id !== productId));
   };
 
-  // Hitung Total Harga
-  const totalAmount = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+  // --- LOGIKA HITUNG HARGA BARU ---
+  // 1. Hitung Subtotal (Harga Asli)
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  // --- 👇 TAMBAHAN BARU (SATPAM POIN) 👇 ---
-  // Cek: Apakah SEMUA barang di keranjang punya label "hasPoints: true"?
-  // Kalau ada satu saja barang mahal (hasPoints: false), maka GAK BOLEH tukar poin.
-  const isBisaTukarPoin = cart.length > 0 && cart.every((item) => item.hasPoints);
+  // 2. Cari barang yang bisa ditukar poin (Organik/Deo)
+  const itemBisaTukar = cart.find((item) => item.hasPoints);
+
+  // 3. Hitung Diskon (Kalau dicentang & ada barangnya, potong harga 1 barang tsb)
+  const nilaiDiskon = (isPakaiPoin && itemBisaTukar) ? itemBisaTukar.price : 0;
+  
+  // 4. Total Akhir yang harus dibayar
+  const totalAmount = subtotal - nilaiDiskon;
 
  // --- PENGATURAN TOKO (SAKLAR DARURAT) ---
   // Ubah false jadi true kalau mau TUTUP SEHARIAN/MENDADAK
@@ -106,7 +114,7 @@ export default function Home() {
   // Toko dianggap Buka kalau: (Tidak Libur Mendadak) DAN (Masih dalam Jam Kerja)
   const isTokoBuka = !isLiburMendadak && (jamSekarang >= jamBuka && jamSekarang < jamTutup);
 
-  // --- FUNGSI CHECKOUT / KIRIM WA (SUDAH DIPERBAIKI) ---
+  // --- FUNGSI CHECKOUT / KIRIM WA ---
   const handleCheckout = () => {
     // 1. Susun Daftar Item
     const itemsText = cart
@@ -120,24 +128,24 @@ export default function Home() {
     } else if (paymentMethod === "transfer") {
       paymentInfo = "Transfer (Minta Rekening/QRIS)";
     } else if (paymentMethod === "tempo") {
-      paymentInfo = "Tempo/Bayar Bulanan (Khusus Member)";
-    } else if (paymentMethod === "tukar_poin") {
-      paymentInfo = "🎟️ TUKAR 10 POIN (Gratis 1 Galon) - Siapkan kupon/kartu poin";
+      paymentInfo = "Tempo (Member)";
     }
 
-    // 3. Cek Poin
-    const hasPointsItem = cart.some((item) => item.hasPoints);
+   // 3. Info Diskon Poin
     let pointsMsg = "";
-    if (hasPointsItem) {
-      pointsMsg = "\n\n(🎟️ Mohon catat poin kupon digital saya untuk pembelian produk berlabel poin)";
+    // Kalau dia mencentang tukar poin
+    if (isPakaiPoin && itemBisaTukar) {
+       pointsMsg = `\n\n🎟️ *SAYA TUKAR 10 POIN*\n(Gratis 1 Galon ${itemBisaTukar.name} senilai Rp ${itemBisaTukar.price.toLocaleString()})`;
+    } 
+    // Kalau cuma beli biasa tapi produknya berpoin
+    else if (cart.some((item) => item.hasPoints)) {
+       pointsMsg = "\n\n(Mohon catat poin kupon digital saya)";
     }
 
-    // 4. Gabungkan Pesan (UPDATE: ADA JAM PENGANTARAN)
-    const timeInfo = deliveryTime === "secepatnya" 
-      ? "SECEPATNYA (Saat ini juga)" 
-      : `JAM ${deliveryTime}`;
+    // 4. Gabungkan Pesan
+    const timeInfo = deliveryTime === "secepatnya" ? "SECEPATNYA (Saat ini juga)" : `JAM ${deliveryTime}`;
 
-    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Total: Rp ${totalAmount.toLocaleString('id-ID')}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}\n----------------\n\nMohon info ongkir ke alamat saya.${pointsMsg}`;
+    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nMohon info ongkir ke alamat saya.`;
 
     // 5. Kirim ke WA
     window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
@@ -423,13 +431,37 @@ export default function Home() {
             )}
           </div>
 
-          {/* BAGIAN BAWAH KERANJANG (PEMBAYARAN & TOTAL) */}
+          {/* --- BAGIAN PEMBAYARAN BARU (Hanya muncul jika keranjang tidak kosong) --- */}
           {cart.length > 0 && (
-            <div className="p-5 border-t bg-slate-50 space-y-4">
+            <div className="p-5 border-t bg-slate-50">
               
-              {/* --- PILIHAN METODE PEMBAYARAN --- */}
+              {/* 1. KOTAK CHECKBOX TUKAR POIN (Muncul kalau ada barang yg bisa ditukar) */}
+              {itemBisaTukar && (
+                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4 animate-pulse">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={isPakaiPoin}
+                        onChange={(e) => setIsPakaiPoin(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      {/* Desain Tombol Switch */}
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </div>
+                    <div className="flex-1">
+                      <span className="block font-bold text-slate-800 text-sm">Tukar 10 Poin? (Gratis 1 Galon)</span>
+                      <span className="text-xs text-slate-500">Potong harga {itemBisaTukar.name} (-Rp {itemBisaTukar.price.toLocaleString()})</span>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* 2. PILIHAN METODE PEMBAYARAN (SISA TAGIHAN) */}
               <div className="bg-white p-3 rounded-lg border border-slate-200">
-                <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Pembayaran:</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  {totalAmount === 0 ? "Konfirmasi Pesanan:" : "Bayar Sisa Tagihan Pakai:"}
+                </label>
                 <select 
                   value={paymentMethod} 
                   onChange={(e) => setPaymentMethod(e.target.value)}
@@ -438,22 +470,7 @@ export default function Home() {
                   <option value="cash">💵 Tunai (COD)</option>
                   <option value="transfer">💳 Transfer Bank / QRIS</option>
                   <option value="tempo">📒 Tempo (Khusus Member)</option>
-                  {/* LOGIKA TUKAR POIN (UPDATE) */}
-                  <option value="tukar_poin" disabled={!isBisaTukarPoin}>
-                    {isBisaTukarPoin 
-                      ? "🎟️ Tukar 10 Poin (Gratis 1 Galon)" 
-                      : "🚫 Tukar Poin (Hanya utk Organik/Deo)"}
-                  </option>
                 </select>
-
-{/* 👇 TEMPEL KODENYA DI SINI (ANTARA SELECT DAN INPUT CASH) 👇 */}
-
-                {/* Peringatan kalau ada barang mahal */}
-                {!isBisaTukarPoin && cart.length > 0 && (
-                  <p className="text-xs text-red-500 mt-1 mb-2">
-                    *Menu "Tukar Poin" terkunci karena ada produk Premium di keranjang.
-                  </p>
-                )}
                 
                 {/* Input Tambahan jika Cash */}
                 {paymentMethod === 'cash' && (
@@ -489,7 +506,7 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="flex justify-between items-center mt-4">
+              <div className="flex justify-between items-center mt-4 mb-4">
                 <span className="text-slate-600 font-medium">Total Pembayaran</span>
                 <span className="text-2xl font-bold text-slate-900">Rp {totalAmount.toLocaleString()}</span>
               </div>
