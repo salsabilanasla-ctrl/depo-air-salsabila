@@ -65,11 +65,12 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // --- FITUR BARU: STATE JAM PENGANTARAN ---
-  const [deliveryTime, setDeliveryTime] = useState("secepatnya"); // Default: Kirim Sekarang
+  // STATE JAM PENGANTARAN
+  const [deliveryTime, setDeliveryTime] = useState("secepatnya"); 
   
-  // State untuk centangan poin
-  const [isPakaiPoin, setIsPakaiPoin] = useState(false);
+  // --- BAGIAN BARU: STATE POIN ---
+  const [klaimPoinUser, setKlaimPoinUser] = useState(0); // User isi sendiri
+  const [isPakaiPoin, setIsPakaiPoin] = useState(false);  // Tombol ON/OFF
 
   // Fungsi Tambah ke Keranjang
   const addToCart = (product) => {
@@ -89,29 +90,48 @@ export default function Home() {
     setCart(cart.filter((item) => item.id !== productId));
   };
 
-  // --- LOGIKA HITUNG HARGA BARU ---
-  // 1. Hitung Subtotal (Harga Asli)
+  // --- LOGIKA HITUNG HARGA (YANG DISEMPURNAKAN) ---
+  
+  // 1. Hitung Subtotal
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  // 2. Cari barang yang bisa ditukar poin (Organik/Deo)
-  const itemBisaTukar = cart.find((item) => item.hasPoints);
+  // 2. Kumpulkan semua harga barang yang BISA ditukar poin
+  let eligiblePrices = [];
+  cart.forEach(item => {
+    if (item.hasPoints) {
+      // Masukkan harga per satu galon (kalau beli 2, masukkan harga 2 kali)
+      for(let i=0; i < item.qty; i++) {
+        eligiblePrices.push(item.price);
+      }
+    }
+  });
 
-  // 3. Hitung Diskon (Kalau dicentang & ada barangnya, potong harga 1 barang tsb)
-  const nilaiDiskon = (isPakaiPoin && itemBisaTukar) ? itemBisaTukar.price : 0;
+  // Urutkan dari yang termahal supaya diskon maksimal
+  eligiblePrices.sort((a, b) => b - a);
+
+  // 3. Hitung berapa galon yang GRATIS berdasarkan input user
+  // Rumus: Poin User dibagi 10 (dibulatkan ke bawah)
+  const maxGalonGratis = Math.floor(klaimPoinUser / 10);
   
-  // 4. Total Akhir yang harus dibayar
+  // Ambil yang paling kecil: Jumlah Galon di keranjang ATAU Jumlah jatah gratis
+  const jumlahYgBisaDitebus = Math.min(maxGalonGratis, eligiblePrices.length);
+
+  // 4. Hitung Total Diskon
+  let nilaiDiskon = 0;
+  if (isPakaiPoin && jumlahYgBisaDitebus > 0) {
+    for (let i = 0; i < jumlahYgBisaDitebus; i++) {
+      nilaiDiskon += eligiblePrices[i];
+    }
+  }
+  
+  // 5. Total Akhir
   const totalAmount = subtotal - nilaiDiskon;
 
- // --- PENGATURAN TOKO (SAKLAR DARURAT) ---
-  // Ubah false jadi true kalau mau TUTUP SEHARIAN/MENDADAK
+  // --- PENGATURAN TOKO ---
   const isLiburMendadak = false; 
-
-  // --- CEK JAM KERJA ---
   const jamSekarang = new Date().getHours();
-  const jamBuka = 8;  // Jam 8 Pagi
-  const jamTutup = 21; // Jam 9 Malam
-  
-  // Toko dianggap Buka kalau: (Tidak Libur Mendadak) DAN (Masih dalam Jam Kerja)
+  const jamBuka = 8;
+  const jamTutup = 21;
   const isTokoBuka = !isLiburMendadak && (jamSekarang >= jamBuka && jamSekarang < jamTutup);
 
   // --- FUNGSI CHECKOUT / KIRIM WA ---
@@ -121,7 +141,7 @@ export default function Home() {
       .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
       .join('\n');
 
-    // 2. Susun Info Pembayaran
+    // 2. Info Pembayaran
     let paymentInfo = "";
     if (paymentMethod === "cash") {
       paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
@@ -131,15 +151,12 @@ export default function Home() {
       paymentInfo = "Tempo (Member)";
     }
 
-   // 3. Info Diskon Poin
+    // 3. Info Diskon Poin (Diupdate)
     let pointsMsg = "";
-    // Kalau dia mencentang tukar poin
-    if (isPakaiPoin && itemBisaTukar) {
-       pointsMsg = `\n\n🎟️ *SAYA TUKAR 10 POIN*\n(Gratis 1 Galon ${itemBisaTukar.name} senilai Rp ${itemBisaTukar.price.toLocaleString()})`;
-    } 
-    // Kalau cuma beli biasa tapi produknya berpoin
-    else if (cart.some((item) => item.hasPoints)) {
-       pointsMsg = "\n\n(Mohon catat poin kupon digital saya)";
+    if (isPakaiPoin && nilaiDiskon > 0) {
+       pointsMsg = `\n\n🎟️ *KLAIM POIN MEMBER*\nUser Input: ${klaimPoinUser} Poin\nPotong Poin: -${jumlahYgBisaDitebus * 10} Poin\n(Gratis ${jumlahYgBisaDitebus} Galon)`;
+    } else if (eligiblePrices.length > 0) {
+       pointsMsg = "\n\n(Simpan struk ini untuk poin digital saya)";
     }
 
     // 4. Gabungkan Pesan
@@ -147,7 +164,6 @@ export default function Home() {
 
     const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nMohon info ongkir ke alamat saya.`;
 
-    // 5. Kirim ke WA
     window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -431,33 +447,65 @@ export default function Home() {
             )}
           </div>
 
-          {/* --- BAGIAN PEMBAYARAN BARU (Hanya muncul jika keranjang tidak kosong) --- */}
+          {/* --- BAGIAN PEMBAYARAN & POIN (YANG DIUBAH) --- */}
           {cart.length > 0 && (
             <div className="p-5 border-t bg-slate-50">
               
-              {/* 1. KOTAK CHECKBOX TUKAR POIN (Muncul kalau ada barang yg bisa ditukar) */}
-              {itemBisaTukar && (
-                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4 animate-pulse">
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <div className="relative">
-                      <input 
-                        type="checkbox" 
-                        checked={isPakaiPoin}
-                        onChange={(e) => setIsPakaiPoin(e.target.checked)}
-                        className="peer sr-only"
-                      />
-                      {/* Desain Tombol Switch */}
-                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </div>
-                    <div className="flex-1">
-                      <span className="block font-bold text-slate-800 text-sm">Tukar 10 Poin? (Gratis 1 Galon)</span>
-                      <span className="text-xs text-slate-500">Potong harga {itemBisaTukar.name} (-Rp {itemBisaTukar.price.toLocaleString()})</span>
-                    </div>
+              {/* 1. INPUT KLAIM POIN MANUAL (BARU) */}
+              {eligiblePrices.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">
+                    🎟️ Punya Poin Member?
                   </label>
+                  
+                  <div className="flex gap-2 mb-2">
+                     <input 
+                       type="number" 
+                       placeholder="0"
+                       min="0"
+                       value={klaimPoinUser > 0 ? klaimPoinUser : ''}
+                       onChange={(e) => setKlaimPoinUser(Number(e.target.value))}
+                       className="w-20 p-2 border rounded-md text-center font-bold text-slate-800"
+                     />
+                     <div className="flex-1 flex items-center text-sm text-slate-600 leading-tight">
+                        Masukan sisa poin Anda untuk cek gratisan.
+                     </div>
+                  </div>
+
+                  {/* Logic Feedback ke User */}
+                  {klaimPoinUser > 0 && (
+                      <div className="text-xs mb-2">
+                          Status: <span className="font-bold text-blue-600">{maxGalonGratis} Galon Gratis</span> 
+                          (Butuh {jumlahYgBisaDitebus * 10} poin)
+                      </div>
+                  )}
+
+                  {/* Saklar Tukar Poin (Hanya muncul kalau Poin Cukup minimal 10) */}
+                  {maxGalonGratis >= 1 && (
+                      <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-yellow-300 hover:bg-yellow-100 transition-colors">
+                         <input 
+                           type="checkbox" 
+                           checked={isPakaiPoin}
+                           onChange={(e) => setIsPakaiPoin(e.target.checked)}
+                           className="w-5 h-5 text-blue-600 cursor-pointer"
+                         />
+                         <div className="text-sm">
+                           <span className="font-bold block text-green-600">
+                             Gunakan Diskon Sekarang!
+                           </span>
+                           <span className="text-xs text-slate-500">
+                             Hemat Rp {nilaiDiskon.toLocaleString()}
+                           </span>
+                         </div>
+                      </label>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-2 italic">
+                    *Admin akan memverifikasi saldo poin Anda via WhatsApp.
+                  </p>
                 </div>
               )}
 
-              {/* 2. PILIHAN METODE PEMBAYARAN (SISA TAGIHAN) */}
+              {/* 2. PILIHAN METODE PEMBAYARAN */}
               <div className="bg-white p-3 rounded-lg border border-slate-200">
                 <label className="block text-sm font-bold text-slate-700 mb-2">
                   {totalAmount === 0 ? "Konfirmasi Pesanan:" : "Bayar Sisa Tagihan Pakai:"}
@@ -472,7 +520,6 @@ export default function Home() {
                   <option value="tempo">📒 Tempo (Khusus Member)</option>
                 </select>
                 
-                {/* Input Tambahan jika Cash */}
                 {paymentMethod === 'cash' && (
                   <input 
                     type="text" 
@@ -484,7 +531,7 @@ export default function Home() {
                 )}
               </div>
 
-              {/* --- FITUR BARU: PILIH JAM PENGANTARAN --- */}
+              {/* 3. PILIH JAM PENGANTARAN */}
               <div className="bg-white p-3 rounded-lg border border-slate-200 mt-2">
                 <label className="block text-sm font-bold text-slate-700 mb-2">Mau Diantar Jam Berapa?</label>
                 <select 
@@ -513,11 +560,11 @@ export default function Home() {
               
               <button 
                 onClick={handleCheckout}
-                disabled={!isTokoBuka} // Kalau tutup, tombol dimatikan
+                disabled={!isTokoBuka}
                 className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
                   isTokoBuka 
-                    ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30" // Warna HIJAU kalau Buka
-                    : "bg-gray-400 cursor-not-allowed text-gray-200" // Warna ABU kalau Tutup
+                    ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"
+                    : "bg-gray-400 cursor-not-allowed text-gray-200"
                 }`}
               >
                 {isTokoBuka ? (
