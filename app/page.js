@@ -596,9 +596,9 @@ export default function Home() {
             <div>
               <h3 className="text-xl font-bold text-emerald-400 mb-4">📍 Lokasi Outlet</h3>
               <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <p className="font-medium text-white">Peumahan Buana Asri</p>
-                <p className="text-slate-400 text-sm">Kecamatan Karawang Timur, Karawang</p>
-                <a href="https://maps.app.goo.gl/DB6YgUhuNuLZ7qDk9" className="text-blue-400 text-sm mt-2 inline-block hover:underline">Lihat di Google Maps →</a>
+                <p className="font-medium text-white">Perumahan Buana Asri, Karawang Timur, Karawang, Jawa Barat</p>
+                <p className="text-slate-400 text-sm">Pajajaran II, Blok A14 No 11</p>
+                <a href="https://maps.app.goo.gl/Ffm77shNoZmqMjPE7" className="text-blue-400 text-sm mt-2 inline-block hover:underline">Lihat di Google Maps →</a>
               </div>
             </div>
             <div>
