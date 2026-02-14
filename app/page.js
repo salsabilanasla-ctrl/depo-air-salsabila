@@ -178,7 +178,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
       
-      {/* --- NAVBAR --- */}
       {/* --- NAVBAR (FIXED) --- */}
       <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-40 border-b border-slate-100 transition-all duration-300">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -256,7 +255,7 @@ export default function Home() {
             Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
           </p>
 
-          {/* === BANNER PROMO === */}
+          {/* === BANNER PROMO (SUDAH PINTAR) === */}
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 mb-10 max-w-2xl mx-auto relative overflow-hidden shadow-lg animate-bounce-slow">
             <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-4 py-1 rounded-bl-xl shadow-sm">
               PROMO SPESIAL
@@ -264,10 +263,20 @@ export default function Home() {
             <h3 className="text-2xl font-extrabold text-yellow-800 mb-2 flex justify-center items-center gap-2">
               🎉 Program Loyalitas Pelanggan
             </h3>
-            {/* TEXT DIUPDATE SUPAYA TIDAK MENAMPILKAN PRODUK HIDDEN */}
+
+            {/* --- BAGIAN INI YANG JADI OTOMATIS --- */}
             <p className="text-yellow-900 mb-4 font-medium">
-              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong> (seperti Deo Oxy).
+              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong> 
+              {bukaRahasia ? (
+                 // Kalau Mode Agen AKTIF, teksnya ini:
+                 <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span>
+              ) : (
+                 // Kalau Mode Biasa, teksnya ini:
+                 <span> (seperti Deo Oxy).</span>
+              )}
             </p>
+            {/* ------------------------------------- */}
+
             <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
               <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Gratis 1 Galon! 🎁</span>
             </div>
