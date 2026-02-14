@@ -191,10 +191,10 @@ export default function Home() {
               if (bukaRahasia) {
                 setBukaRahasia(false); // Tutup lagi
               } else {
-                const sandi = prompt("Masukkan Kode Akses Agen:");
-                if (sandi === "12345") { // <--- PASSWORDNYA "12345"
+                const sandi = prompt("Masukkan Kode Akses Member:");
+                if (sandi === "Member Alkaline 123") { // <--- PASSWORDNYA "12345"
                   setBukaRahasia(true);
-                  alert("Mode Agen Aktif! Silakan belanja. 🔓");
+                  alert("Mode Member Aktif! Silakan belanja. 🔓");
                 } else if (sandi !== null) {
                   alert("Maaf, kode akses salah! ❌");
                 }
