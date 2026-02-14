@@ -204,11 +204,11 @@ export default function Home() {
             <button
               onClick={() => {
                 if (bukaRahasia) {
-                  const confirmLogout = confirm("Mau keluar dari Mode Agen?");
+                  const confirmLogout = confirm("Mau keluar dari Mode Member?");
                   if (confirmLogout) setBukaRahasia(false);
                 } else {
-                  const sandi = prompt("Masukkan Kode Khusus Agen/Member:");
-                  if (sandi === "12345") {
+                  const sandi = prompt("Masukkan Kode Khusus Member:");
+                  if (sandi === "Rumah alkaline 123") {
                     setBukaRahasia(true);
                     alert("✅ Berhasil! Produk S+ & Organik sudah muncul.");
                   } else if (sandi !== null) {
