@@ -80,6 +80,62 @@ export default function Home() {
   const [klaimPoinUser, setKlaimPoinUser] = useState(0); // User isi sendiri
   const [isPakaiPoin, setIsPakaiPoin] = useState(false);  // Tombol ON/OFF
 
+  {/* === SLIDER IKLAN OTOMATIS (MULAI DARI SINI) === */}
+      <div className="max-w-4xl mx-auto px-4 mb-10">
+        <h2 className="text-xl font-bold text-center mb-4 text-slate-700">Galeri Kami</h2>
+        
+        <div className="relative h-48 md:h-80 rounded-2xl overflow-hidden shadow-lg border border-slate-200 group">
+          {/* Loop Gambar */}
+          {slideImages.map((img, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === slideIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={img}
+                alt={`Slide ${index}`}
+                className="w-full h-full object-cover"
+              />
+              {/* Lapisan Gelap Tipis */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+          ))}
+
+          {/* Tombol Titik-Titik di Bawah */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">
+            {slideImages.map((_, index) => (
+              <div
+                key={index}
+                onClick={() => setSlideIndex(index)}
+                className={`h-2 rounded-full cursor-pointer transition-all duration-300 shadow-sm ${
+                  index === slideIndex ? "bg-white w-6" : "bg-white/40 w-2"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* === SLIDER SELESAI === */}
+
+  const slideImages = [
+    // Gambar 1 (Pake gambar kamu yang sekarang/baru)
+    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800", 
+    // Gambar 2
+    "https://images.unsplash.com/photo-1616400619175-5beda3a17896?auto=format&fit=crop&q=80&w=800",
+    // Gambar 3
+    "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&q=80&w=800",
+  ];
+
+  // Efek ganti gambar tiap 3 detik
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev === slideImages.length - 1 ? 0 : prev + 1));
+    }, 3000); 
+    return () => clearInterval(interval);
+  }, []);
+  
   // Fungsi Tambah ke Keranjang
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
@@ -170,7 +226,7 @@ export default function Home() {
     // 4. Gabungkan Pesan
     const timeInfo = deliveryTime === "secepatnya" ? "SECEPATNYA (Saat ini juga)" : `JAM ${deliveryTime}`;
 
-    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nMohon info ongkir ke alamat saya.`;
+    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nTerima Kasih.`;
 
     window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -359,6 +415,42 @@ export default function Home() {
       {/* --- PRODUK --- */}
       <section id="produk" className="py-20 bg-slate-50">
         <div className="container mx-auto px-4">
+
+          {/* === SLIDER IKLAN OTOMATIS === */}
+        <div className="relative h-48 md:h-80 w-full rounded-2xl overflow-hidden shadow-lg mb-10 group">
+          
+          {/* Loop Gambar */}
+          {slideImages.map((img, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === slideIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={img}
+                alt={`Slide ${index}`}
+                className="w-full h-full object-cover"
+              />
+              {/* Lapisan Gelap Tipis */}
+              <div className="absolute inset-0 bg-black/10"></div>
+            </div>
+          ))}
+
+          {/* Titik Indikator Bawah */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">
+            {slideImages.map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === slideIndex ? "bg-white w-6" : "bg-white/50 w-2"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+        {/* === SLIDER SELESAI === */}
+        
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-800 mb-2">Pilih Kesegaran Anda</h2>
             <p className="text-slate-500">Klik produk untuk melihat detail khasiatnya.</p>
