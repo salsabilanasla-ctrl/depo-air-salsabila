@@ -179,15 +179,31 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
       
       {/* --- NAVBAR --- */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md shadow-sm z-50 transition-all duration-300">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* --- LOGO TOMBOL RAHASIA --- */}
+      {/* --- NAVBAR (FIXED) --- */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-40 border-b border-slate-100 transition-all duration-300">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          
+          {/* 1. LOGO (DENGAN PASSWORD RAHASIA) */}
           <div 
             className="flex items-center gap-2 cursor-pointer select-none hover:opacity-80 transition-all"
-            onClick={() => setBukaRahasia(!bukaRahasia)} 
+            onClick={() => {
+              // --- LOGIKA PASSWORD ---
+              if (bukaRahasia) {
+                setBukaRahasia(false); // Tutup lagi
+              } else {
+                const sandi = prompt("Masukkan Kode Akses Agen:");
+                if (sandi === "12345") { // <--- PASSWORDNYA "12345"
+                  setBukaRahasia(true);
+                  alert("Mode Agen Aktif! Silakan belanja. 🔓");
+                } else if (sandi !== null) {
+                  alert("Maaf, kode akses salah! ❌");
+                }
+              }
+              // -----------------------
+            }} 
           >
-            {/* Icon (Berubah warna jadi ORANGE kalau rahasia terbuka) */}
             <div className={`p-2 rounded-lg shadow-lg transition-all duration-300 ${bukaRahasia ? 'bg-orange-500' : 'bg-gradient-to-br from-blue-500 to-cyan-400'}`}>
+               {/* Ikon Tetesan Air */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
@@ -195,26 +211,29 @@ export default function Home() {
             <div>
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">
                 Rumah<span className="text-blue-500">Alkaline</span>
-                {/* Bintang muncul kalau rahasia terbuka */}
                 {bukaRahasia && <span className="text-orange-500 ml-1 text-sm animate-pulse">★</span>}
               </h1>
               <p className="text-[10px] text-slate-500 font-medium tracking-wider">PREMIUM WATER STORE</p>
             </div>
           </div>
 
-          <button 
-            onClick={() => setIsCartOpen(!isCartOpen)} 
-            className="relative p-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
+          {/* 2. TOMBOL KERANJANG DI POJOK KANAN */}
+          <div 
+            className="relative cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-all"
+            onClick={() => setIsCartOpen(true)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full animate-bounce">
-                {cart.reduce((a, b) => a + b.qty, 0)}
-              </span>
-            )}
-          </button>
+            <div className="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {/* Badge Jumlah Item */}
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-bounce">
+                  {cart.reduce((total, item) => total + item.qty, 0)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </nav>
 
