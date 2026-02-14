@@ -8,11 +8,11 @@ const products = [
     name: "Organik (RO)",
     price: 7000,
     category: "Ekonomis",
-    rahasia: true, // <--- INI KUNCINYA (Disembunyikan)
+    rahasia: true, // <--- INI PENTING! (Supaya Tersembunyi)
     hasPoints: true,
     image: "/organik.jpg",
     desc: "Air minum ekonomis untuk kebutuhan harian.",
-    details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar."
+    details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian."
   },
   {
     id: 2,
@@ -41,11 +41,11 @@ const products = [
     name: "S+ (Sehat)",
     price: 15000,
     category: "Keluarga",
-    rahasia: true, // <--- INI JUGA DISEMBUNYIKAN
+    rahasia: true, // <--- INI JUGA PENTING!
     hasPoints: false,
-    image: "/sehat.jpg", // Pastikan nama file gambar sesuai
+    image: "/sehat.jpg",
     desc: "Air sehat seimbang untuk seluruh keluarga.",
-    details: "Keseimbangan pH yang sempurna untuk tubuh."
+    details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia."
   },
   {
     id: 5,
