@@ -3,16 +3,18 @@ import React, { useState } from 'react';
 
 // --- DATA PRODUK ---
 const products = [
-  {
-    id: 1,
-    name: "Organik (RO)",
-    price: 7000,
-    category: "Ekonomis",
-    hasPoints: true,
-    image: "/organik.jpg",
-    desc: "Air minum ekonomis untuk kebutuhan harian.",
-    details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
-  },
+  // --- PRODUK ORGANIK DI-HIDE (Permintaan Owner: Hidden Menu) ---
+  // {
+  //   id: 1,
+  //   name: "Organik (RO)",
+  //   price: 7000,
+  //   category: "Ekonomis",
+  //   hasPoints: true,
+  //   image: "/organik.jpg",
+  //   desc: "Air minum ekonomis untuk kebutuhan harian.",
+  //   details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
+  // },
+
   {
     id: 2,
     name: "Suli (Pegunungan)",
@@ -20,8 +22,9 @@ const products = [
     category: "Premium",
     hasPoints: false,
     image: "/suli.jpg",
-    desc: "Kesegaran alami langsung dari sumber pegunungan.",
-    details: "Diambil langsung dari mata air pegunungan terpilih. Mengandung mineral alami yang menyegarkan dahaga seketika. Rasanya dingin alami!"
+    // Deskripsi baru dari Website Suli
+    desc: "Air murni TDS 0. Bantu detoks ginjal, bersihkan darah & kaya oksigen.",
+    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan. Sangat menyehatkan karena membantu menguraikan logam berat dalam ginjal, membersihkan usus besar & saluran darah, mengikis kerak persendian, serta menambah asupan oksigen."
   },
   {
     id: 3,
@@ -30,19 +33,23 @@ const products = [
     category: "Best Seller",
     hasPoints: true,
     image: "/deo.jpg",
-    desc: "Air beroksigen tinggi untuk energi ekstra.",
-    details: "Diproses dengan teknologi Oxygenated Water. Meningkatkan kadar oksigen dalam darah, membantu fokus, dan menghilangkan kantuk. Favorit pelanggan!"
+    // Deskripsi disamakan dengan Suli (karena kandungan sama)
+    desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal dan peredaran darah.",
+    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0. Membantu proses detoksifikasi tubuh, menguraikan kristal dalam kandung kemih, membersihkan peredaran darah, dan menjaga persendian tetap sehat."
   },
-  {
-    id: 4,
-    name: "S+ (Sehat)",
-    price: 15000,
-    category: "Keluarga",
-    hasPoints: false,
-    image: "/s+.jpg",
-    desc: "Air sehat seimbang untuk seluruh keluarga.",
-    details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
-  },
+
+  // --- PRODUK S+ DI-HIDE (Menunggu Galon Baru) ---
+  // {
+  //   id: 4,
+  //   name: "S+ (Sehat)",
+  //   price: 15000,
+  //   category: "Keluarga",
+  //   hasPoints: false,
+  //   image: "/s+.jpg",
+  //   desc: "Air sehat seimbang untuk seluruh keluarga.",
+  //   details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
+  // },
+
   {
     id: 5,
     name: "Telaga 8+ (Alkaline)",
@@ -228,8 +235,9 @@ export default function Home() {
             <h3 className="text-2xl font-extrabold text-yellow-800 mb-2 flex justify-center items-center gap-2">
               🎉 Program Loyalitas Pelanggan
             </h3>
+            {/* TEXT DIUPDATE SUPAYA TIDAK MENAMPILKAN PRODUK HIDDEN */}
             <p className="text-yellow-900 mb-4 font-medium">
-              Dapatkan Poin Digital untuk pembelian <strong>Organik (RO)</strong> & <strong>Deo (Oxy)</strong>.
+              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong> (seperti Deo Oxy).
             </p>
             <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
               <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Gratis 1 Galon! 🎁</span>
@@ -297,7 +305,7 @@ export default function Home() {
             <p className="text-slate-500">Klik produk untuk melihat detail khasiatnya.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 justify-center">
             {products.map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
                 
@@ -459,17 +467,17 @@ export default function Home() {
                   </label>
                   
                   <div className="flex gap-2 mb-2">
-                     <input 
-                       type="number" 
-                       placeholder="0"
-                       min="0"
-                       value={klaimPoinUser > 0 ? klaimPoinUser : ''}
-                       onChange={(e) => setKlaimPoinUser(Number(e.target.value))}
-                       className="w-20 p-2 border rounded-md text-center font-bold text-slate-800"
-                     />
-                     <div className="flex-1 flex items-center text-sm text-slate-600 leading-tight">
-                        Masukan sisa poin Anda untuk cek gratisan.
-                     </div>
+                      <input 
+                        type="number" 
+                        placeholder="0"
+                        min="0"
+                        value={klaimPoinUser > 0 ? klaimPoinUser : ''}
+                        onChange={(e) => setKlaimPoinUser(Number(e.target.value))}
+                        className="w-20 p-2 border rounded-md text-center font-bold text-slate-800"
+                      />
+                      <div className="flex-1 flex items-center text-sm text-slate-600 leading-tight">
+                         Masukan sisa poin Anda untuk cek gratisan.
+                      </div>
                   </div>
 
                   {/* Logic Feedback ke User */}
@@ -483,20 +491,20 @@ export default function Home() {
                   {/* Saklar Tukar Poin (Hanya muncul kalau Poin Cukup minimal 10) */}
                   {maxGalonGratis >= 1 && (
                       <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-yellow-300 hover:bg-yellow-100 transition-colors">
-                         <input 
-                           type="checkbox" 
-                           checked={isPakaiPoin}
-                           onChange={(e) => setIsPakaiPoin(e.target.checked)}
-                           className="w-5 h-5 text-blue-600 cursor-pointer"
-                         />
-                         <div className="text-sm">
-                           <span className="font-bold block text-green-600">
+                          <input 
+                            type="checkbox" 
+                            checked={isPakaiPoin}
+                            onChange={(e) => setIsPakaiPoin(e.target.checked)}
+                            className="w-5 h-5 text-blue-600 cursor-pointer"
+                          />
+                          <div className="text-sm">
+                            <span className="font-bold block text-green-600">
                              Gunakan Diskon Sekarang!
-                           </span>
-                           <span className="text-xs text-slate-500">
-                             Hemat Rp {nilaiDiskon.toLocaleString()}
-                           </span>
-                         </div>
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              Hemat Rp {nilaiDiskon.toLocaleString()} (Tukar {jumlahYgBisaDitebus} Item)
+                            </span>
+                          </div>
                       </label>
                   )}
                   <p className="text-[10px] text-slate-400 mt-2 italic">
