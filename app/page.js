@@ -316,7 +316,11 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 justify-center">
-            {products.map((product) => (
+            {products
+              // === INI PENYARING SAKTINYA ===
+              .filter(product => !product.rahasia || bukaRahasia) 
+              // ==============================
+              .map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
                 
                 {product.hasPoints && (
