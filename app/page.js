@@ -3,62 +3,60 @@ import React, { useState } from 'react';
 
 // --- DATA PRODUK ---
 const products = [
-  // --- PRODUK ORGANIK DI-HIDE (Permintaan Owner: Hidden Menu) ---
-  // {
-  //   id: 1,
-  //   name: "Organik (RO)",
-  //   price: 7000,
-  //   category: "Ekonomis",
-  //   hasPoints: true,
-  //   image: "/organik.jpg",
-  //   desc: "Air minum ekonomis untuk kebutuhan harian.",
-  //   details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian dengan harga sangat terjangkau."
-  // },
-
+  {
+    id: 1,
+    name: "Organik (RO)",
+    price: 7000,
+    category: "Ekonomis",
+    rahasia: true, // <--- INI KUNCINYA (Disembunyikan)
+    hasPoints: true,
+    image: "/organik.jpg",
+    desc: "Air minum ekonomis untuk kebutuhan harian.",
+    details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar."
+  },
   {
     id: 2,
     name: "Suli (Pegunungan)",
     price: 19000,
     category: "Premium",
+    rahasia: false, // Ini muncul terus
     hasPoints: false,
     image: "/suli.jpg",
-    // Deskripsi baru dari Website Suli
-    desc: "Air murni TDS 0. Bantu detoks ginjal, bersihkan darah & kaya oksigen.",
-    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan. Sangat menyehatkan karena membantu menguraikan logam berat dalam ginjal, membersihkan usus besar & saluran darah, mengikis kerak persendian, serta menambah asupan oksigen."
+    desc: "Air murni TDS 0. Bantu detoks ginjal & kaya oksigen.",
+    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan."
   },
   {
     id: 3,
     name: "Deo (Oxy)",
     price: 15000,
     category: "Best Seller",
+    rahasia: false, // Ini muncul terus
     hasPoints: true,
     image: "/deo.jpg",
-    // Deskripsi disamakan dengan Suli (karena kandungan sama)
-    desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal dan peredaran darah.",
-    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0. Membantu proses detoksifikasi tubuh, menguraikan kristal dalam kandung kemih, membersihkan peredaran darah, dan menjaga persendian tetap sehat."
+    desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal.",
+    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0."
   },
-
-  // --- PRODUK S+ DI-HIDE (Menunggu Galon Baru) ---
-  // {
-  //   id: 4,
-  //   name: "S+ (Sehat)",
-  //   price: 15000,
-  //   category: "Keluarga",
-  //   hasPoints: false,
-  //   image: "/s+.jpg",
-  //   desc: "Air sehat seimbang untuk seluruh keluarga.",
-  //   details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia. Rasa netral dan sangat menyegarkan."
-  // },
-
+  {
+    id: 4,
+    name: "S+ (Sehat)",
+    price: 15000,
+    category: "Keluarga",
+    rahasia: true, // <--- INI JUGA DISEMBUNYIKAN
+    hasPoints: false,
+    image: "/sehat.jpg", // Pastikan nama file gambar sesuai
+    desc: "Air sehat seimbang untuk seluruh keluarga.",
+    details: "Keseimbangan pH yang sempurna untuk tubuh."
+  },
   {
     id: 5,
     name: "Telaga 8+ (Alkaline)",
     price: 15000,
     category: "Kesehatan",
+    rahasia: false, // Ini muncul terus
     hasPoints: false,
     image: "/telaga.jpg",
     desc: "pH Tinggi untuk detoksifikasi tubuh.",
-    details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung, mendetoks racun dalam tubuh, dan menjaga vitalitas. Solusi hidup sehat."
+    details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung."
   }
 ];
 
@@ -71,6 +69,9 @@ export default function Home() {
   
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // --- TAMBAHAN BARU ---
+  const [bukaRahasia, setBukaRahasia] = useState(false); // Default terkunci
 
   // STATE JAM PENGANTARAN
   const [deliveryTime, setDeliveryTime] = useState("secepatnya"); 
@@ -180,14 +181,23 @@ export default function Home() {
       {/* --- NAVBAR --- */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md shadow-sm z-50 transition-all duration-300">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-400 p-2 rounded-lg shadow-lg">
+          {/* --- LOGO TOMBOL RAHASIA --- */}
+          <div 
+            className="flex items-center gap-2 cursor-pointer select-none hover:opacity-80 transition-all"
+            onClick={() => setBukaRahasia(!bukaRahasia)} 
+          >
+            {/* Icon (Berubah warna jadi ORANGE kalau rahasia terbuka) */}
+            <div className={`p-2 rounded-lg shadow-lg transition-all duration-300 ${bukaRahasia ? 'bg-orange-500' : 'bg-gradient-to-br from-blue-500 to-cyan-400'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 tracking-tight">Rumah<span className="text-blue-500">Alkaline</span></h1>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+                Rumah<span className="text-blue-500">Alkaline</span>
+                {/* Bintang muncul kalau rahasia terbuka */}
+                {bukaRahasia && <span className="text-orange-500 ml-1 text-sm animate-pulse">★</span>}
+              </h1>
               <p className="text-[10px] text-slate-500 font-medium tracking-wider">PREMIUM WATER STORE</p>
             </div>
           </div>
