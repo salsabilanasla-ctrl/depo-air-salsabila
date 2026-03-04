@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase'; // INI KURIR SUPABASE-NYA
 
 // --- DATA PRODUK ---
 const products = [
@@ -8,9 +9,9 @@ const products = [
     name: "Organik (RO)",
     price: 7000,
     category: "Ekonomis",
-    rahasia: true, // <--- INI PENTING! (Supaya Tersembunyi)
+    rahasia: true,
     hasPoints: true,
-    image: "/organik.jpg",
+    image: "/Organik.jpg",
     desc: "Air minum ekonomis untuk kebutuhan harian.",
     details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian."
   },
@@ -19,9 +20,9 @@ const products = [
     name: "Suli (Pegunungan)",
     price: 19000,
     category: "Premium",
-    rahasia: false, // Ini muncul terus
+    rahasia: false,
     hasPoints: false,
-    image: "/suli.jpg",
+    image: "/Suli.jpg",
     desc: "Air murni TDS 0. Bantu detoks ginjal & kaya oksigen.",
     details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan."
   },
@@ -30,9 +31,9 @@ const products = [
     name: "Deo (Oxy)",
     price: 15000,
     category: "Best Seller",
-    rahasia: false, // Ini muncul terus
+    rahasia: false,
     hasPoints: true,
-    image: "/deo.jpg",
+    image: "/Deo.jpg",
     desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal.",
     details: "Air murni dengan kandungan oksigen tinggi dan TDS 0."
   },
@@ -41,9 +42,9 @@ const products = [
     name: "S+ (Sehat)",
     price: 15000,
     category: "Keluarga",
-    rahasia: true, // <--- INI JUGA PENTING!
+    rahasia: true,
     hasPoints: false,
-    image: "/sehat.jpg",
+    image: "/Splus.jpg",
     desc: "Air sehat seimbang untuk seluruh keluarga.",
     details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia."
   },
@@ -52,91 +53,56 @@ const products = [
     name: "Telaga 8+ (Alkaline)",
     price: 15000,
     category: "Kesehatan",
-    rahasia: false, // Ini muncul terus
+    rahasia: false,
     hasPoints: false,
-    image: "/telaga.jpg",
+    image: "/Telaga8plus.jpg",
     desc: "pH Tinggi untuk detoksifikasi tubuh.",
     details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung."
   }
 ];
 
 export default function Home() {
+  // === STATE KERANJANG & LOGIC UTAMA ===
   const [cart, setCart] = useState([]);
-  
-  // STATE PEMBAYARAN
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [cashNote, setCashNote] = useState("");
-  
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  
+  // STATE SLIDER GAMBAR
+  const [slideIndex, setSlideIndex] = useState(0);
 
-  // --- TAMBAHAN BARU ---
-  const [bukaRahasia, setBukaRahasia] = useState(false); // Default terkunci
-
-  // STATE JAM PENGANTARAN
+  // STATE PEMBAYARAN & PENGANTARAN
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [cashNote, setCashNote] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("secepatnya"); 
   
-  // --- BAGIAN BARU: STATE POIN ---
-  const [klaimPoinUser, setKlaimPoinUser] = useState(0); // User isi sendiri
-  const [isPakaiPoin, setIsPakaiPoin] = useState(false);  // Tombol ON/OFF
+  // STATE FITUR AGEN & POIN
+  const [bukaRahasia, setBukaRahasia] = useState(false);
+  const [klaimPoinUser, setKlaimPoinUser] = useState(0); 
+  const [isPakaiPoin, setIsPakaiPoin] = useState(false);
 
-  {/* === SLIDER IKLAN OTOMATIS (MULAI DARI SINI) === */}
-      <div className="max-w-4xl mx-auto px-4 mb-10">
-        <h2 className="text-xl font-bold text-center mb-4 text-slate-700">Galeri Kami</h2>
-        
-        <div className="relative h-48 md:h-80 rounded-2xl overflow-hidden shadow-lg border border-slate-200 group">
-          {/* Loop Gambar */}
-          {slideImages.map((img, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === slideIndex ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <img
-                src={img}
-                alt={`Slide ${index}`}
-                className="w-full h-full object-cover"
-              />
-              {/* Lapisan Gelap Tipis */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-            </div>
-          ))}
+  // STATE FORM SUPABASE (BARU)
+  const [namaPemesan, setNamaPemesan] = useState("");
+  const [alamatPemesan, setAlamatPemesan] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-          {/* Tombol Titik-Titik di Bawah */}
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">
-            {slideImages.map((_, index) => (
-              <div
-                key={index}
-                onClick={() => setSlideIndex(index)}
-                className={`h-2 rounded-full cursor-pointer transition-all duration-300 shadow-sm ${
-                  index === slideIndex ? "bg-white w-6" : "bg-white/40 w-2"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* === SLIDER SELESAI === */}
+  // STATUS TOKO
+  const isTokoBuka = true;
 
+  // === DATA GAMBAR SLIDER ===
   const slideImages = [
-    // Gambar 1 (Pake gambar kamu yang sekarang/baru)
-    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800", 
-    // Gambar 2
-    "https://images.unsplash.com/photo-1616400619175-5beda3a17896?auto=format&fit=crop&q=80&w=800",
-    // Gambar 3
-    "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&q=80&w=800",
+    "/gambar1.jpg",
+    "/gambar2.jpg",
+    "/gambar3.jpg",
   ];
 
-  // Efek ganti gambar tiap 3 detik
   useEffect(() => {
     const interval = setInterval(() => {
       setSlideIndex((prev) => (prev === slideImages.length - 1 ? 0 : prev + 1));
     }, 3000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [slideImages.length]);
   
-  // Fungsi Tambah ke Keranjang
+  // Fungsi Tambah/Kurang Item
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
     if (existingItem) {
@@ -149,38 +115,26 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
-  // Fungsi Kurangi/Hapus Item
   const removeFromCart = (productId) => {
     setCart(cart.filter((item) => item.id !== productId));
   };
 
-  // --- LOGIKA HITUNG HARGA (YANG DISEMPURNAKAN) ---
-  
-  // 1. Hitung Subtotal
+  // --- LOGIKA HITUNG HARGA & POIN ---
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  // 2. Kumpulkan semua harga barang yang BISA ditukar poin
   let eligiblePrices = [];
   cart.forEach(item => {
     if (item.hasPoints) {
-      // Masukkan harga per satu galon (kalau beli 2, masukkan harga 2 kali)
       for(let i=0; i < item.qty; i++) {
         eligiblePrices.push(item.price);
       }
     }
   });
-
-  // Urutkan dari yang termahal supaya diskon maksimal
   eligiblePrices.sort((a, b) => b - a);
 
-  // 3. Hitung berapa galon yang GRATIS berdasarkan input user
-  // Rumus: Poin User dibagi 10 (dibulatkan ke bawah)
   const maxGalonGratis = Math.floor(klaimPoinUser / 10);
-  
-  // Ambil yang paling kecil: Jumlah Galon di keranjang ATAU Jumlah jatah gratis
   const jumlahYgBisaDitebus = Math.min(maxGalonGratis, eligiblePrices.length);
 
-  // 4. Hitung Total Diskon
   let nilaiDiskon = 0;
   if (isPakaiPoin && jumlahYgBisaDitebus > 0) {
     for (let i = 0; i < jumlahYgBisaDitebus; i++) {
@@ -188,24 +142,52 @@ export default function Home() {
     }
   }
   
-  // 5. Total Akhir
   const totalAmount = subtotal - nilaiDiskon;
 
-  // --- PENGATURAN TOKO ---
-  const isLiburMendadak = false; 
-  const jamSekarang = new Date().getHours();
-  const jamBuka = 8;
-  const jamTutup = 21;
-  const isTokoBuka = !isLiburMendadak && (jamSekarang >= jamBuka && jamSekarang < jamTutup);
+  // --- FUNGSI CHECKOUT DENGAN SUPABASE ---
+  const handleCheckout = async () => {
+    // 1. Cek apakah Nama dan Alamat sudah diisi
+    if (!namaPemesan || !alamatPemesan) {
+      alert("Halo! Tolong isi Nama dan Alamat pengiriman dulu ya biar kurir kami nggak nyasar 🚚💨");
+      return;
+    }
 
-  // --- FUNGSI CHECKOUT / KIRIM WA ---
-  const handleCheckout = () => {
-    // 1. Susun Daftar Item
+    setIsSubmitting(true);
+
+    // 2. Siapkan data untuk dikirim ke Supabase
+    const namaAir = cart.map((item) => item.name).join(", ");
+    const totalGalon = cart.reduce((total, item) => total + item.qty, 0);
+
+    // 3. Simpan ke Supabase (KOLOM BARU SUDAH DITAMBAHKAN DI SINI)
+    const { error } = await supabase
+      .from('pesanan')
+      .insert([
+        { 
+          nama: namaPemesan, 
+          jenis_air: namaAir, 
+          jumlah: totalGalon, 
+          alamat: alamatPemesan,
+          tukar_poin: isPakaiPoin ? Number(klaimPoinUser) : 0,
+          metode_pembayaran: paymentMethod,
+          jumlah_bayar: totalAmount,
+          waktu_pengantaran: deliveryTime
+        }
+      ]);
+
+    setIsSubmitting(false);
+
+    // 4. Kalau gagal simpan database, kasih tau pelanggan
+    if (error) {
+      alert("Waduh, ada sedikit kendala saat mencatat pesanan ke database. Coba lagi ya!");
+      console.error(error);
+      return;
+    }
+
+    // 5. Kalau berhasil simpan database, lanjut kirim WA
     const itemsText = cart
       .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
       .join('\n');
 
-    // 2. Info Pembayaran
     let paymentInfo = "";
     if (paymentMethod === "cash") {
       paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
@@ -215,7 +197,6 @@ export default function Home() {
       paymentInfo = "Tempo (Member)";
     }
 
-    // 3. Info Diskon Poin (Diupdate)
     let pointsMsg = "";
     if (isPakaiPoin && nilaiDiskon > 0) {
        pointsMsg = `\n\n🎟️ *KLAIM POIN MEMBER*\nUser Input: ${klaimPoinUser} Poin\nPotong Poin: -${jumlahYgBisaDitebus * 10} Poin\n(Gratis ${jumlahYgBisaDitebus} Galon)`;
@@ -223,22 +204,28 @@ export default function Home() {
        pointsMsg = "\n\n(Simpan struk ini untuk poin digital saya)";
     }
 
-    // 4. Gabungkan Pesan
     const timeInfo = deliveryTime === "secepatnya" ? "SECEPATNYA (Saat ini juga)" : `JAM ${deliveryTime}`;
 
-    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nTerima Kasih.`;
+    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n*👤 Nama:* ${namaPemesan}\n*📍 Alamat:* ${alamatPemesan}\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nTerima Kasih.`;
 
+    // --- POSISI KODE YANG BENAR (DI DALAM HANDLECHECKOUT) ---
+    // 1. Kosongkan keranjang
+    setCart([]); 
+    
+    // 2. Munculkan pop-up
+    alert("Hore! Pesanan berhasil dicatat. Klik OK untuk lanjut kirim pesan di WhatsApp ya! 🎉");
+
+    // 3. Buka WhatsApp
     window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
       
-      {/* --- NAVBAR (FIXED) --- */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-40 border-b border-slate-100 transition-all duration-300">
+      {/* --- NAVBAR --- */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-40 border-b border-slate-100">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           
-          {/* 1. LOGO (TETAP BISA DIKLIK, TAPI KITA BUAT TOMBOL KHUSUS JUGA) */}
           <div className="flex items-center gap-2 select-none">
             <div className={`p-2 rounded-lg shadow-sm transition-all duration-300 ${bukaRahasia ? 'bg-orange-500' : 'bg-blue-500'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,10 +240,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* BAGIAN KANAN: TOMBOL AGEN & KERANJANG */}
           <div className="flex items-center gap-3">
-            
-            {/* 2. TOMBOL KHUSUS LOGIN AGEN (INI SOLUSINYA!) */}
             <button
               onClick={() => {
                 if (bukaRahasia) {
@@ -272,27 +256,11 @@ export default function Home() {
                   }
                 }
               }}
-              className={`
-                px-3 py-1.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1
-                ${bukaRahasia 
-                  ? "bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200" 
-                  : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                }
-              `}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1 ${bukaRahasia ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-slate-100 text-slate-600 border-slate-200"}`}
             >
-              {bukaRahasia ? (
-                <>
-                  <span>🔓</span> <span className="hidden md:inline">Agen Aktif</span>
-                </>
-              ) : (
-                <>
-                  <span>🔐</span> <span className="hidden md:inline">Masuk Member</span>
-                  <span className="md:hidden">Agen</span> {/* Teks pendek utk HP */}
-                </>
-              )}
+              {bukaRahasia ? "🔓 Agen Aktif" : "🔐 Masuk Member"}
             </button>
 
-            {/* 3. TOMBOL KERANJANG */}
             <div 
               className="relative cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-all"
               onClick={() => setIsCartOpen(true)}
@@ -308,18 +276,14 @@ export default function Home() {
                 )}
               </div>
             </div>
-
           </div>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <header className="relative pt-32 pb-20 px-4 overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10"></div>
-
+      <header className="relative pt-32 pb-10 px-4 overflow-hidden">
         <div className="container mx-auto text-center max-w-4xl">
-          <span className="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold mb-4 animate-fade-in-up">
+          <span className="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold mb-4">
             👋 Selamat Datang, Sahabat Sehat!
           </span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
@@ -332,178 +296,157 @@ export default function Home() {
             Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
           </p>
 
-          {/* === BANNER PROMO (SUDAH PINTAR) === */}
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 mb-10 max-w-2xl mx-auto relative overflow-hidden shadow-lg animate-bounce-slow">
-            <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-4 py-1 rounded-bl-xl shadow-sm">
-              PROMO SPESIAL
-            </div>
-            <h3 className="text-2xl font-extrabold text-yellow-800 mb-2 flex justify-center items-center gap-2">
-              🎉 Program Loyalitas Pelanggan
-            </h3>
-
-            {/* --- BAGIAN INI YANG JADI OTOMATIS --- */}
+          {/* BANNER PROMO */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 max-w-2xl mx-auto relative overflow-hidden shadow-lg">
+            <h3 className="text-2xl font-extrabold text-yellow-800 mb-2">🎉 Program Loyalitas Pelanggan</h3>
             <p className="text-yellow-900 mb-4 font-medium">
               Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong> 
-              {bukaRahasia ? (
-                 // Kalau Mode Agen AKTIF, teksnya ini:
-                 <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span>
-              ) : (
-                 // Kalau Mode Biasa, teksnya ini:
-                 <span> (seperti Deo Oxy).</span>
-              )}
+              {bukaRahasia ? <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span> : <span> (seperti Deo Oxy).</span>}
             </p>
-            {/* ------------------------------------- */}
-
             <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
               <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Gratis 1 Galon! 🎁</span>
             </div>
           </div>
-
-          <button 
-            onClick={() => document.getElementById('produk').scrollIntoView({ behavior: 'smooth' })}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-bold shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-1 transition-all"
-          >
-            Lihat Pilihan Air 💧
-          </button>
         </div>
       </header>
 
-      {/* --- EDUKASI --- */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-              <img 
-                src="/iklan.jpg" 
-                alt="Air Sehat" 
-                className="w-full h-[400px] object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
-                <p className="text-white font-medium text-lg">"Tubuh manusia 70% adalah air. Jangan isi dengan yang sembarangan."</p>
-              </div>
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-800 mb-6">Kenapa Harus Rumah Alkaline?</h2>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">✨</div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">Teknologi Filtrasi Terbaik</h3>
-                    <p className="text-slate-600">Menyaring partikel berbahaya namun tetap mempertahankan mineral baik.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 flex-shrink-0">🛡️</div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">Bebas Bakteri & Higienis</h3>
-                    <p className="text-slate-600">Galon dicuci dengan sterilisasi tinggi sebelum pengisian.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">⚡</div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">pH Seimbang (Alkaline)</h3>
-                    <p className="text-slate-600">Membantu menetralkan keasaman tubuh akibat makanan cepat saji.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- PRODUK --- */}
-      <section id="produk" className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4">
-
-          {/* === SLIDER IKLAN OTOMATIS === */}
-        <div className="relative h-48 md:h-80 w-full rounded-2xl overflow-hidden shadow-lg mb-10 group">
+      {/* --- TUTORIAL CARA PESAN --- */}
+      <div className="container mx-auto px-4 mb-16 mt-4">
+        <div className="max-w-4xl mx-auto p-6 bg-blue-50 border border-blue-100 rounded-2xl shadow-sm">
+          <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800 mb-6">
+            ✨ Cara Mudah Pesan Air ✨
+          </h3>
           
-          {/* Loop Gambar */}
-          {slideImages.map((img, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === slideIndex ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <img
-                src={img}
-                alt={`Slide ${index}`}
-                className="w-full h-full object-cover"
-              />
-              {/* Lapisan Gelap Tipis */}
-              <div className="absolute inset-0 bg-black/10"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Langkah 1 */}
+            <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-4">
+                👆
+              </div>
+              <h4 className="text-lg font-bold text-slate-800 mb-2">1. Pilih Air</h4>
+              <p className="text-sm text-slate-600">
+                Gulir (scroll) ke bawah, pilih air kesukaan Anda lalu klik <b>tombol biru (+)</b> di kotak produk.
+              </p>
             </div>
-          ))}
 
-          {/* Titik Indikator Bawah */}
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">
-            {slideImages.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === slideIndex ? "bg-white w-6" : "bg-white/50 w-2"
-                }`}
-              />
-            ))}
+            {/* Langkah 2 */}
+            <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
+              <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center text-3xl mb-4">
+                🛒
+              </div>
+              <h4 className="text-lg font-bold text-slate-800 mb-2">2. Atur Pesanan</h4>
+              <p className="text-sm text-slate-600">
+                Buka ikon keranjang di pojok kanan atas. Atur jumlah galon dan tulis info pengiriman.
+              </p>
+            </div>
+
+            {/* Langkah 3 */}
+            <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-3xl mb-4">
+                📱
+              </div>
+              <h4 className="text-lg font-bold text-slate-800 mb-2">3. Kirim via WA</h4>
+              <p className="text-sm text-slate-600">
+                Klik tombol <b>Pesan via WA</b>. Pesanan otomatis tercatat dan terkirim ke WhatsApp!
+              </p>
+            </div>
           </div>
         </div>
-        {/* === SLIDER SELESAI === */}
-        
+      </div>
+
+      {/* --- KENAPA RUMAH ALKALINE --- */}
+      <div className="container mx-auto px-4 pb-16">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="w-full md:w-1/2">
+            <img src="/iklan.jpg" alt="Rumah Alkaline" className="w-full h-auto object-contain rounded-3xl shadow-xl border border-slate-100" />
+          </div>
+          <div className="w-full md:w-1/2 space-y-6">
+            <h2 className="text-3xl font-bold text-slate-800">Kenapa Harus Rumah Alkaline?</h2>
+            <ul className="space-y-6">
+              <li className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Teknologi Filtrasi Terbaik</h3>
+                  <p className="text-slate-600 text-sm md:text-base">Teknologi filtrasi terbaik yang membuang zat berbahaya namun tetap mempertahankan mineral baik.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Bebas Bakteri & Higienis</h3>
+                  <p className="text-slate-600 text-sm md:text-base">Galon dicuci dengan sterilisasi tinggi sebelum pengisian untuk menjamin kebersihan.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">pH Seimbang (Alkaline)</h3>
+                  <p className="text-slate-600 text-sm md:text-base">Membantu menetralkan keasaman tubuh akibat pola makan dan gaya hidup.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* --- PRODUK & SLIDER SECTION --- */}
+      <section id="produk" className="py-10 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto px-4 mb-16">
+            <h2 className="text-xl font-bold text-center mb-4 text-slate-700">Galeri Kami</h2>
+            
+            <div className="relative h-[300px] md:h-[500px] rounded-2xl overflow-hidden shadow-lg border border-slate-200 group">
+              {slideImages.map((img, index) => (
+                <div key={index} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === slideIndex ? "opacity-100" : "opacity-0"}`}>
+                  <img src={img} alt={`Slide ${index}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                </div>
+              ))}
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10">
+                {slideImages.map((_, index) => (
+                  <div key={index} onClick={() => setSlideIndex(index)} className={`h-2 rounded-full cursor-pointer transition-all duration-300 shadow-sm ${index === slideIndex ? "bg-white w-6" : "bg-white/40 w-2"}`} />
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-800 mb-2">Pilih Kesegaran Anda</h2>
-            <p className="text-slate-500">Klik produk untuk melihat detail khasiatnya.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 justify-center">
-            {products
-              // === INI PENYARING SAKTINYA ===
-              .filter(product => !product.rahasia || bukaRahasia) 
-              // ==============================
-              .map((product) => (
+            {products.filter(product => !product.rahasia || bukaRahasia).map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
-                
                 {product.hasPoints && (
                   <div className="absolute top-3 left-3 z-20 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
                     🎟️ Dapat Poin
                   </div>
                 )}
-
-                <div 
-                  className="relative h-48 overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedProduct(product)}
-                >
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                  />
+                <div className="relative h-48 overflow-hidden cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-md text-slate-700 shadow-sm">
                     {product.category}
                   </div>
                 </div>
-
                 <div className="p-4 flex flex-col flex-grow">
-                  <h3 
-                    className="font-bold text-lg text-slate-800 mb-1 cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedProduct(product)}
-                  >
-                    {product.name}
-                  </h3>
+                  <h3 className="font-bold text-lg text-slate-800 mb-1 cursor-pointer hover:text-blue-600" onClick={() => setSelectedProduct(product)}>{product.name}</h3>
                   <p className="text-sm text-slate-500 mb-4 line-clamp-2">{product.desc}</p>
-                  
                   <div className="mt-auto flex items-center justify-between">
-                    <span className="text-blue-600 font-bold text-lg">
-                      Rp {product.price.toLocaleString('id-ID')}
-                    </span>
-                    <button 
-                      onClick={() => addToCart(product)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
+                    <span className="text-blue-600 font-bold text-lg">Rp {product.price.toLocaleString('id-ID')}</span>
+                    <button onClick={() => addToCart(product)} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </button>
                   </div>
                 </div>
@@ -516,14 +459,7 @@ export default function Home() {
       {/* --- POPUP DETAIL --- */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-fade-in relative" onClick={(e) => e.stopPropagation()}>
-            
-            {selectedProduct.hasPoints && (
-                  <div className="absolute top-3 left-3 z-20 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                    🎟️ Produk Ini Dapat Poin!
-                  </div>
-            )}
-
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
             <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-56 object-cover" />
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
@@ -531,25 +467,15 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-slate-800">{selectedProduct.name}</h3>
                   <span className="text-sm text-blue-600 font-medium">{selectedProduct.category}</span>
                 </div>
-                <span className="text-xl font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
-                  Rp {selectedProduct.price.toLocaleString()}
-                </span>
+                <span className="text-xl font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">Rp {selectedProduct.price.toLocaleString()}</span>
               </div>
               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
                 <h4 className="font-bold text-blue-800 mb-1 text-sm">💡 Khasiat & Kandungan:</h4>
                 <p className="text-slate-700 text-sm leading-relaxed">{selectedProduct.details}</p>
               </div>
               <div className="flex gap-3">
-                <button 
-                  onClick={() => setSelectedProduct(null)}
-                  className="flex-1 py-3 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  Tutup
-                </button>
-                <button 
-                  onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors"
-                >
+                <button onClick={() => setSelectedProduct(null)} className="flex-1 py-3 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50">Tutup</button>
+                <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700">
                   + Keranjang
                 </button>
               </div>
@@ -558,234 +484,214 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- KERANJANG (SIDEBAR) --- */}
+      {/* --- KERANJANG (SIDEBAR KESELURUHAN) --- */}
       <div className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative">
+          
           <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              🛒 Keranjang Belanja
-            </h2>
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">🛒 Keranjang Belanja</h2>
             <button onClick={() => setIsCartOpen(false)} className="text-slate-400 hover:text-red-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
 
-          {/* LIST ITEM */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* LIST ITEM & FORM */}
+          <div className="flex-1 overflow-y-auto p-5">
             {cart.length === 0 ? (
               <div className="text-center text-slate-400 mt-20">
                 <p className="mb-2">Keranjang masih kosong 😔</p>
                 <button onClick={() => setIsCartOpen(false)} className="text-blue-600 font-bold hover:underline">Yuk pilih produk dulu!</button>
               </div>
             ) : (
-              cart.map((item) => (
-                <div key={item.id} className="flex gap-4 items-center bg-white border p-3 rounded-lg shadow-sm relative overflow-hidden">
-                  {item.hasPoints && (
-                    <div className="absolute top-0 left-0 bg-yellow-400 w-1 h-full"></div>
-                  )}
-                  
-                  <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover" />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1">
-                      {item.name}
-                      {item.hasPoints && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1 rounded">🎟️ Poin</span>}
-                    </h4>
-                    <p className="text-blue-600 font-bold text-sm">Rp {(item.price * item.qty).toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-600 font-bold text-sm">{item.qty}x</span>
-                    <button 
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+              <div className="space-y-6">
+                
+                {/* 1. Daftar Produk yang Dipilih */}
+                <div className="space-y-3">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex gap-4 items-center bg-white border p-3 rounded-lg shadow-sm relative overflow-hidden">
+                      {item.hasPoints && <div className="absolute top-0 left-0 bg-yellow-400 w-1 h-full"></div>}
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover" />
+                      <div className="flex-1">
+                        <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1">
+                          {item.name}
+                          {item.hasPoints && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1 rounded">🎟️ Poin</span>}
+                        </h4>
+                        <p className="text-blue-600 font-bold text-sm">Rp {(item.price * item.qty).toLocaleString('id-ID')}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-600 font-bold text-sm">{item.qty}x</span>
+                        <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 p-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))
+
+                {/* 2. Form NAMA & ALAMAT (TAMBAHAN BARU) */}
+                <div className="bg-white p-4 border rounded-xl shadow-sm border-blue-200">
+                  <label className="font-bold text-sm text-gray-800 block mb-2">👤 Data Pengiriman:</label>
+                  <input 
+                    type="text" 
+                    value={namaPemesan} 
+                    onChange={(e) => setNamaPemesan(e.target.value)} 
+                    placeholder="Nama Anda" 
+                    className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 bg-slate-50" 
+                    required
+                  />
+                  <textarea 
+                    value={alamatPemesan} 
+                    onChange={(e) => setAlamatPemesan(e.target.value)} 
+                    placeholder="Alamat Lengkap (Contoh: Blok A No 12)" 
+                    className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50" 
+                    rows="2"
+                    required
+                  ></textarea>
+                </div>
+
+                {/* 3. Form Poin Member */}
+                <div className="bg-[#FFFCE8] p-4 rounded-xl border border-yellow-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="font-bold text-sm text-gray-800 flex items-center gap-2">🎟️ Tukar Poin Member?</label>
+                    <input type="checkbox" checked={isPakaiPoin} onChange={(e) => setIsPakaiPoin(e.target.checked)} className="w-4 h-4 cursor-pointer" />
+                  </div>
+                  {isPakaiPoin && (
+                    <div className="flex gap-3 items-center mt-3">
+                      <input type="number" value={klaimPoinUser || ""} onChange={(e) => setKlaimPoinUser(Number(e.target.value))} placeholder="0" className="border p-2 rounded-lg w-20 text-center outline-none focus:border-blue-500" />
+                      <span className="text-xs text-gray-600 leading-tight">Masukan saldo poin untuk ditukar galon gratis.</span>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-gray-400 mt-2 italic">*Admin akan memverifikasi saldo poin Anda via WhatsApp.</p>
+                </div>
+
+                {/* 4. Form Metode Pembayaran */}
+                <div className="bg-white p-4 border rounded-xl shadow-sm">
+                  <label className="font-bold text-sm text-gray-800 block mb-2">Pilih Pembayaran:</label>
+                  <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
+                    <option value="cash">💵 Tunai (COD)</option>
+                    <option value="transfer">💳 Transfer Bank / QRIS</option>
+                    <option value="tempo">📝 Tempo (Khusus Agen)</option>
+                  </select>
+                  {paymentMethod === "cash" && (
+                    <input type="text" value={cashNote} onChange={(e) => setCashNote(e.target.value)} placeholder="Butuh kembalian dari uang berapa? (Misal: 50rb)" className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500" />
+                  )}
+                </div>
+
+                {/* 5. Form Jam Pengantaran */}
+                <div className="bg-white p-4 border rounded-xl shadow-sm">
+                  <label className="font-bold text-sm text-gray-800 block mb-2">Mau Diantar Kapan?</label>
+                  <select value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500">
+                    <option value="Satu Jam Setelah Pemesanan">🚀 Satu Jam Setelah Pemesanan</option>
+                    <option value="08.00 - 09.00">☀️ 08.00 - 09.00</option>
+                    <option value="09.00 - 10.00">☀️ 09.00 - 10.00</option>
+                    <option value="10.00 - 11.00">☀️ 10.00 - 11.00</option>
+                    <option value="11.00 - 12.00">☀️ 11.00 - 12.00</option>
+                    <option value="12.00 - 13.00">☀️ 12.00 - 13.00</option>
+                    <option value="13.00 - 14.00">☀️ 13.00 - 14.00</option>
+                    <option value="14.00 - 15.00">☀️ 14.00 - 15.00</option>
+                    <option value="15.00 - 16.00">🌅 15.00 - 16.00</option>
+                    <option value="16.00 - 17.00">🌅 16.00 - 17.00</option>
+                    <option value="17.00 - 18.00">🌅 17.00 - 18.00</option>
+                    <option value="18.00 - 19.00">🌅 18.00 - 19.00</option>
+                    <option value="19.00 - 20.00">🌅 19.00 - 20.00</option>
+                  </select>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* --- BAGIAN PEMBAYARAN & POIN (YANG DIUBAH) --- */}
+          {/* --- BAGIAN CHECKOUT (SEKARANG MENYATU DI DALAM SIDEBAR) --- */}
           {cart.length > 0 && (
-            <div className="p-5 border-t bg-slate-50">
-              
-              {/* 1. INPUT KLAIM POIN MANUAL (BARU) */}
-              {eligiblePrices.length > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4">
-                  <label className="block text-sm font-bold text-slate-800 mb-2">
-                    🎟️ Punya Poin Member?
-                  </label>
-                  
-                  <div className="flex gap-2 mb-2">
-                      <input 
-                        type="number" 
-                        placeholder="0"
-                        min="0"
-                        value={klaimPoinUser > 0 ? klaimPoinUser : ''}
-                        onChange={(e) => setKlaimPoinUser(Number(e.target.value))}
-                        className="w-20 p-2 border rounded-md text-center font-bold text-slate-800"
-                      />
-                      <div className="flex-1 flex items-center text-sm text-slate-600 leading-tight">
-                         Masukan sisa poin Anda untuk cek gratisan.
-                      </div>
-                  </div>
-
-                  {/* Logic Feedback ke User */}
-                  {klaimPoinUser > 0 && (
-                      <div className="text-xs mb-2">
-                          Status: <span className="font-bold text-blue-600">{maxGalonGratis} Galon Gratis</span> 
-                          (Butuh {jumlahYgBisaDitebus * 10} poin)
-                      </div>
-                  )}
-
-                  {/* Saklar Tukar Poin (Hanya muncul kalau Poin Cukup minimal 10) */}
-                  {maxGalonGratis >= 1 && (
-                      <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-yellow-300 hover:bg-yellow-100 transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={isPakaiPoin}
-                            onChange={(e) => setIsPakaiPoin(e.target.checked)}
-                            className="w-5 h-5 text-blue-600 cursor-pointer"
-                          />
-                          <div className="text-sm">
-                            <span className="font-bold block text-green-600">
-                             Gunakan Diskon Sekarang!
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              Hemat Rp {nilaiDiskon.toLocaleString()} (Tukar {jumlahYgBisaDitebus} Item)
-                            </span>
-                          </div>
-                      </label>
-                  )}
-                  <p className="text-[10px] text-slate-400 mt-2 italic">
-                    *Admin akan memverifikasi saldo poin Anda via WhatsApp.
-                  </p>
+            <div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
+              {/* Tampilkan info diskon */}
+              {isPakaiPoin && nilaiDiskon > 0 && (
+                <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
+                  ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
                 </div>
               )}
 
-              {/* 2. PILIHAN METODE PEMBAYARAN */}
-              <div className="bg-white p-3 rounded-lg border border-slate-200">
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  {totalAmount === 0 ? "Konfirmasi Pesanan:" : "Bayar Sisa Tagihan Pakai:"}
-                </label>
-                <select 
-                  value={paymentMethod} 
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-md mb-2 text-sm"
-                >
-                  <option value="cash">💵 Tunai (COD)</option>
-                  <option value="transfer">💳 Transfer Bank / QRIS</option>
-                  <option value="tempo">📒 Tempo (Khusus Member)</option>
-                </select>
-                
-                {paymentMethod === 'cash' && (
-                  <input 
-                    type="text" 
-                    placeholder="Uang pecahan berapa? (Misal: 50rb)" 
-                    value={cashNote}
-                    onChange={(e) => setCashNote(e.target.value)}
-                    className="w-full p-2 border border-slate-300 rounded-md text-sm bg-slate-50"
-                  />
-                )}
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-slate-500 text-sm font-medium">Total ({cart.length} item)</span>
+                <span className="text-xl font-bold text-slate-800">Rp {totalAmount.toLocaleString('id-ID')}</span>
               </div>
 
-              {/* 3. PILIH JAM PENGANTARAN */}
-              <div className="bg-white p-3 rounded-lg border border-slate-200 mt-2">
-                <label className="block text-sm font-bold text-slate-700 mb-2">Mau Diantar Jam Berapa?</label>
-                <select 
-                  value={deliveryTime} 
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-md text-sm"
-                >
-                  <option value="secepatnya">🚀 Kirim 1 jam setelah pemesanan</option>
-                  <option disabled>--- Pilih Jam ---</option>
-                  {[...Array(13)].map((_, i) => {
-                    const jam = 8 + i; 
-                    if (jam > 20) return null; 
-                    return (
-                      <option key={jam} value={`${jam}.00 - ${jam + 1}.00`}>
-                        {jam < 10 ? `0${jam}` : jam}.00 - {jam + 1 < 10 ? `0${jam + 1}` : jam + 1}.00
-                      </option>
-                    )
-                  })}
-                </select>
-              </div>
-
-              <div className="flex justify-between items-center mt-4 mb-4">
-                <span className="text-slate-600 font-medium">Total Pembayaran</span>
-                <span className="text-2xl font-bold text-slate-900">Rp {totalAmount.toLocaleString()}</span>
-              </div>
-              
               <button 
                 onClick={handleCheckout}
-                disabled={!isTokoBuka}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
-                  isTokoBuka 
+                disabled={!isTokoBuka || cart.length === 0 || isSubmitting}
+                className={`w-full py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${
+                  isTokoBuka && cart.length > 0 && !isSubmitting
                     ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"
                     : "bg-gray-400 cursor-not-allowed text-gray-200"
                 }`}
               >
-                {isTokoBuka ? (
-                  <>
-                    <span>Pesan via WhatsApp</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                  </>
-                ) : (
-                  <span>{isLiburMendadak ? "Maaf, Toko Sedang Libur 🙏" : "Toko Tutup (Buka 08.00) 😴"}</span>
+                {/* Icon kecil panah/kirim */}
+                {!isSubmitting && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+                  </svg>
                 )}
+                {isSubmitting ? "Mencatat Pesanan..." : (isTokoBuka ? "Lanjut Pesan via WA" : "Toko Tutup")}
               </button>
             </div>
           )}
+
         </div>
       </div>
 
-      {/* --- FOOTER --- */}
-      <footer className="bg-slate-900 text-white pt-16 pb-8 rounded-t-[3rem] mt-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12 mb-12">
+      {/* --- FOOTER LENGKAP --- */}
+      <footer className="bg-slate-900 text-slate-300 py-16 mt-20 rounded-t-[3rem] relative z-10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+            
+            {/* Kolom 1: Tentang */}
             <div>
-              <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center gap-2">
-                Rumah Alkaline 💧
-              </h2>
-              <p className="text-slate-400 leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                Rumah Alkaline <span className="text-blue-500">💧</span>
+              </h3>
+              <p className="leading-relaxed text-slate-400">
                 Kami berkomitmen menyediakan air minum berkualitas tinggi dengan standar kebersihan terbaik untuk kesehatan keluarga Indonesia.
               </p>
             </div>
+
+            {/* Kolom 2: Lokasi Outlet */}
             <div>
-              <h3 className="text-xl font-bold text-emerald-400 mb-4">📍 Lokasi Outlet</h3>
-              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <p className="font-medium text-white">Perumahan Buana Asri, Karawang Timur, Karawang, Jawa Barat</p>
-                <p className="text-slate-400 text-sm">Pajajaran II, Blok A14 No 11</p>
-                <a href="https://maps.app.goo.gl/Ffm77shNoZmqMjPE7" className="text-blue-400 text-sm mt-2 inline-block hover:underline">Lihat di Google Maps →</a>
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <span className="text-red-500">📍</span> Lokasi Outlet
+              </h3>
+              <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                <p className="font-bold text-white mb-2">Perumahan Buana Asri, Karawang Timur</p>
+                <p className="text-sm mb-4">Pajajaran II, Blok A14 No 11</p>
+                <a href="https://goo.gl/maps/xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm font-bold hover:text-blue-300 flex items-center gap-1 transition-colors">
+                  Lihat di Google Maps →
+                </a>
               </div>
             </div>
+
+            {/* Kolom 3: Jam Operasional */}
             <div>
-              <h3 className="text-xl font-bold text-yellow-400 mb-4">🕒 Jam Operasional</h3>
-              <ul className="space-y-3">
-                <li className="flex justify-between items-center border-b border-slate-700 pb-2">
-                  <span className="text-slate-300">Senin - Sabtu</span>
-                  <span className="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold">08.00 - 20.00</span>
-                </li>
-                <li className="flex justify-between items-center border-b border-slate-700 pb-2">
-                  <span className="text-slate-300">Minggu</span>
-                  <span className="bg-orange-500 px-3 py-1 rounded-full text-xs font-bold">09.00 - 17.00</span>
-                </li>
-              </ul>
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <span className="text-yellow-500">🕒</span> Jam Operasional
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                  <span>Senin - Jumat</span>
+                  <span className="bg-blue-600 text-white text-xs py-1 px-3 rounded-full font-bold">09.00 - 20.00</span>
+                </div>
+                <div className="flex justify-between items-center pt-1">
+                  <span>Sabtu - Minggu</span>
+                  <span className="bg-orange-500 text-white text-xs py-1 px-3 rounded-full font-bold">08.00 - 20.00</span>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="border-t border-slate-800 pt-8 text-center">
-            <p className="text-slate-500 text-sm">
-              © 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
-            </p>
+
+          {/* Copyright Bawah */}
+          <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
+            © 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
