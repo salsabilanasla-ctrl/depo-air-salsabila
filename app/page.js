@@ -12,7 +12,7 @@ const products = [
     category: "Ekonomis",
     rahasia: true,
     hasPoints: true,
-    image: "/Organik.jpg",
+    image: "/organik.jpg",
     desc: "Air minum ekonomis untuk kebutuhan harian.",
     details: "Air Organik diproses melalui filtrasi mikro yang menyaring partikel kasar. Cocok untuk memasak dan kebutuhan harian."
   },
@@ -23,7 +23,7 @@ const products = [
     category: "Premium",
     rahasia: false,
     hasPoints: false,
-    image: "/Suli.jpg",
+    image: "/suli.jpg",
     desc: "Air murni TDS 0. Bantu detoks ginjal & kaya oksigen.",
     details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan.Bantu detoks ginjal & kaya oksigen."
   },
@@ -34,7 +34,7 @@ const products = [
     category: "Best Seller",
     rahasia: false,
     hasPoints: true,
-    image: "/Deo.jpg",
+    image: "/deo.jpg",
     desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal.",
     details: "Air murni dengan kandungan oksigen tinggi dan TDS 0.Solusi sehat untuk ginjal."
   },
