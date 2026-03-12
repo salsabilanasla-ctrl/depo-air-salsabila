@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase'; // INI KURIR SUPABASE-NYA
 
@@ -24,7 +25,7 @@ const products = [
     hasPoints: false,
     image: "/Suli.jpg",
     desc: "Air murni TDS 0. Bantu detoks ginjal & kaya oksigen.",
-    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan."
+    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan.Bantu detoks ginjal & kaya oksigen."
   },
   {
     id: 3,
@@ -35,7 +36,7 @@ const products = [
     hasPoints: true,
     image: "/Deo.jpg",
     desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal.",
-    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0."
+    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0.Solusi sehat untuk ginjal."
   },
   {
     id: 4,
@@ -46,7 +47,7 @@ const products = [
     hasPoints: false,
     image: "/Splus.jpg",
     desc: "Air sehat seimbang untuk seluruh keluarga.",
-    details: "Keseimbangan pH yang sempurna untuk tubuh. Aman dikonsumsi balita hingga lansia."
+    details: "Keseimbangan pH yang sempurna untuk tubuh. Air sehat seimbang untuk seluruh keluarga. Aman dikonsumsi balita hingga lansia."
   },
   {
     id: 5,
@@ -66,24 +67,28 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+
   // STATE SLIDER GAMBAR
   const [slideIndex, setSlideIndex] = useState(0);
 
   // STATE PEMBAYARAN & PENGANTARAN
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [cashNote, setCashNote] = useState("");
-  const [deliveryTime, setDeliveryTime] = useState("secepatnya"); 
-  
+  const [deliveryTime, setDeliveryTime] = useState("Satu Jam Setelah Pemesanan");
+  const [jadwalTempo, setJadwalTempo] = useState("Akhir Minggu (Sabtu/Minggu)"); // <-- STATE BARU: Jadwal Tempo
+
   // STATE FITUR AGEN & POIN
   const [bukaRahasia, setBukaRahasia] = useState(false);
-  const [klaimPoinUser, setKlaimPoinUser] = useState(0); 
+  const [klaimPoinUser, setKlaimPoinUser] = useState(0);
   const [isPakaiPoin, setIsPakaiPoin] = useState(false);
 
-  // STATE FORM SUPABASE (BARU)
+  // STATE FORM SUPABASE
   const [namaPemesan, setNamaPemesan] = useState("");
   const [alamatPemesan, setAlamatPemesan] = useState("");
+  const [noWaPemesan, setNoWaPemesan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userPoints, setUserPoints] = useState(0); 
+  const [statusPembeli, setStatusPembeli] = useState("Baru"); // <-- STATE BARU: Deteksi Pelanggan Baru / Member
 
   // STATUS TOKO
   const isTokoBuka = true;
@@ -95,13 +100,52 @@ export default function Home() {
     "/gambar3.jpg",
   ];
 
+  // --- EFEK CEK POIN OTOMATIS BERDASARKAN NO WA ---
+  useEffect(() => {
+    const cekPoinPelanggan = async () => {
+      if (noWaPemesan.length >= 10) {
+        const { data, error } = await supabase
+          .from('pelanggan')
+          .select('total_poin')
+          .eq('no_wa', noWaPemesan)
+          .single();
+
+        if (data) {
+          // Kalau nomor WA udah ada di database
+          setUserPoints(data.total_poin || 0);
+          setStatusPembeli("Member"); 
+        } else {
+          // Kalau nomor WA belum ada, TAPI dia udah masukin password rahasia
+          setUserPoints(0);
+          setStatusPembeli(bukaRahasia ? "Member" : "Baru"); 
+        }
+      } else {
+        setUserPoints(0);
+        setStatusPembeli(bukaRahasia ? "Member" : "Baru");
+      }
+    };
+
+    const jedaNgetik = setTimeout(() => {
+      cekPoinPelanggan();
+    }, 500);
+
+    return () => clearTimeout(jedaNgetik);
+  }, [noWaPemesan, bukaRahasia]); 
+
+  // --- EFEK BARU: RESET TEMPO KALAU KETAHUAN BUKAN MEMBER ---
+  useEffect(() => {
+    if (statusPembeli === "Baru" && paymentMethod === "tempo") {
+      setPaymentMethod("cash"); // Otomatis balik ke cash
+    }
+  }, [statusPembeli, paymentMethod]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSlideIndex((prev) => (prev === slideImages.length - 1 ? 0 : prev + 1));
-    }, 3000); 
+    }, 3000);
     return () => clearInterval(interval);
   }, [slideImages.length]);
-  
+
   // Fungsi Tambah/Kurang Item
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
@@ -119,6 +163,9 @@ export default function Home() {
     setCart(cart.filter((item) => item.id !== productId));
   };
 
+  // --- CEK APAKAH ADA PRODUK YANG BISA TUKAR POIN DI KERANJANG ---
+  const bisaTukarPoin = cart.some((item) => item.hasPoints);
+
   // --- LOGIKA HITUNG HARGA & POIN ---
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
@@ -132,91 +179,124 @@ export default function Home() {
   });
   eligiblePrices.sort((a, b) => b - a);
 
-  const maxGalonGratis = Math.floor(klaimPoinUser / 10);
-  const jumlahYgBisaDitebus = Math.min(maxGalonGratis, eligiblePrices.length);
-
   let nilaiDiskon = 0;
-  if (isPakaiPoin && jumlahYgBisaDitebus > 0) {
-    for (let i = 0; i < jumlahYgBisaDitebus; i++) {
-      nilaiDiskon += eligiblePrices[i];
-    }
-  }
-  
-  const totalAmount = subtotal - nilaiDiskon;
+  let poinYangAkanDipotong = 0;
 
-  // --- FUNGSI CHECKOUT DENGAN SUPABASE ---
+  if (isPakaiPoin && klaimPoinUser >= 10 && bisaTukarPoin) {
+    const jumlahGalonGratis = Math.floor(klaimPoinUser / 10);
+    poinYangAkanDipotong = jumlahGalonGratis * 10; 
+    nilaiDiskon = jumlahGalonGratis * 15000;
+  }
+
+  const totalAmount = subtotal > nilaiDiskon ? subtotal - nilaiDiskon : 0;
+
+  // --- FUNGSI CHECKOUT DENGAN SUPABASE (VERSI UPGRADE) ---
   const handleCheckout = async () => {
-    // 1. Cek apakah Nama dan Alamat sudah diisi
-    if (!namaPemesan || !alamatPemesan) {
-      alert("Halo! Tolong isi Nama dan Alamat pengiriman dulu ya biar kurir kami nggak nyasar 🚚💨");
+    if (!namaPemesan || !noWaPemesan || !alamatPemesan) {
+      alert("Halo! Tolong isi Nama, Nomor WhatsApp, dan Alamat pengiriman dulu ya biar pesanan dan poinnya aman! 🚚💨");
+      return;
+    }
+
+    if (isPakaiPoin && klaimPoinUser > userPoints) {
+      alert("Waduh, poin yang ingin ditukar melebihi saldo poin Anda nih! Kurangi jumlahnya ya. 🛑");
       return;
     }
 
     setIsSubmitting(true);
 
-    // 2. Siapkan data untuk dikirim ke Supabase
     const namaAir = cart.map((item) => item.name).join(", ");
     const totalGalon = cart.reduce((total, item) => total + item.qty, 0);
 
-    // 3. Simpan ke Supabase (KOLOM BARU SUDAH DITAMBAHKAN DI SINI)
-    const { error } = await supabase
-      .from('pesanan')
-      .insert([
-        { 
-          nama: namaPemesan, 
-          jenis_air: namaAir, 
-          jumlah: totalGalon, 
-          alamat: alamatPemesan,
-          tukar_poin: isPakaiPoin ? Number(klaimPoinUser) : 0,
-          metode_pembayaran: paymentMethod,
-          jumlah_bayar: totalAmount,
-          waktu_pengantaran: deliveryTime
+    try {
+      // 3. Simpan Pesanan ke Supabase
+      const { data: dataPesanan, error: errorPesanan } = await supabase
+        .from('pesanan')
+        .insert([
+          {
+            no_wa: noWaPemesan,
+            nama: namaPemesan,
+            jenis_air: namaAir,
+            jumlah: totalGalon,
+            alamat: alamatPemesan,
+            tukar_poin: poinYangAkanDipotong,
+            metode_pembayaran: paymentMethod === "tempo" ? `Tempo (${jadwalTempo})` : paymentMethod, // <-- Jadwal Tempo Masuk Sini
+            jumlah_bayar: totalAmount,
+            waktu_pengantaran: deliveryTime,
+            tipe_pembeli: statusPembeli
+          }
+        ])
+        .select();
+
+      if (errorPesanan) {
+        setIsSubmitting(false);
+        alert(`❌ Gagal masukin data pesanan nih! Error dari Supabase: ${errorPesanan.message}`);
+        console.error("DETAIL ERROR PESANAN:", errorPesanan);
+        return;
+      }
+
+      // 4. Hitung dan Update Poin ke Tabel 'pelanggan'
+      let poinBaruDidapat = 0;
+      if (!isPakaiPoin) {
+        poinBaruDidapat = cart.reduce((total, item) => item.hasPoints ? total + item.qty : total, 0);
+      }
+      const sisaPoinAkhir = userPoints - poinYangAkanDipotong + poinBaruDidapat;
+
+      if (poinBaruDidapat > 0 || statusPembeli === "Member") {
+        const { data: dataPelanggan, error: errorPelanggan } = await supabase
+          .from('pelanggan')
+          .upsert([
+            {
+              no_wa: noWaPemesan,
+              nama: namaPemesan,
+              total_poin: sisaPoinAkhir,
+              status_pelanggan: statusPembeli
+            }
+          ], { onConflict: 'no_wa' })
+          .select();
+
+        if (errorPelanggan) {
+          setIsSubmitting(false);
+          alert(`❌ Gagal update Poin Pelanggan! Error: ${errorPelanggan.message}`);
+          console.error("DETAIL ERROR PELANGGAN:", errorPelanggan);
+          return;
         }
-      ]);
+      }
 
-    setIsSubmitting(false);
+      // 5. Buat pesan WhatsApp
+      const itemsText = cart
+        .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
+        .join('\n');
 
-    // 4. Kalau gagal simpan database, kasih tau pelanggan
-    if (error) {
-      alert("Waduh, ada sedikit kendala saat mencatat pesanan ke database. Coba lagi ya!");
-      console.error(error);
-      return;
+      let paymentInfo = "";
+      if (paymentMethod === "cash") paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
+      else if (paymentMethod === "transfer") paymentInfo = "Transfer (Minta Rekening/QRIS)";
+      else if (paymentMethod === "tempo") paymentInfo = `Tempo (Member)\n🗓️ Jadwal Bayar: ${jadwalTempo}`; // <-- Update ke WA Papah
+
+      let pointsMsg = "";
+      if (isPakaiPoin && nilaiDiskon > 0) {
+         pointsMsg = `\n\n🎟️ *INFO POIN MEMBER*\nSisa Saldo Awal: ${userPoints} Poin\nPotong Poin: -${poinYangAkanDipotong} Poin\n(Setara Potongan Rp ${nilaiDiskon.toLocaleString('id-ID')})\n*Sisa Saldo Sekarang: ${sisaPoinAkhir} Poin*`;
+      } else if (poinBaruDidapat > 0) {
+         pointsMsg = `\n\n🎟️ *INFO POIN MEMBER*\nPoin Didapat Hari ini: +${poinBaruDidapat} Poin\n*Total Tabungan Poin: ${sisaPoinAkhir} Poin*`;
+      }
+
+      const timeInfo = deliveryTime === "Satu Jam Setelah Pemesanan" ? "🚀 1 Jam Setelah Pemesanan" : `JAM ${deliveryTime}`;
+      const badgePembeli = statusPembeli === "Baru" ? "🆕 [PELANGGAN BARU]" : "👑 [MEMBER LAMA]";
+
+      const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n${badgePembeli}\n*👤 Nama:* ${namaPemesan}\n*📱 No. WA:* ${noWaPemesan}\n*📍 Alamat:* ${alamatPemesan}\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nTerima Kasih.`;
+
+      setCart([]);
+      setKlaimPoinUser(0);
+      setIsPakaiPoin(false);
+      setIsSubmitting(false);
+
+      alert("✅ Hore! Pesanan berhasil dicatat di database. Klik OK untuk lanjut kirim pesan di WhatsApp ya! 🎉");
+      window.location.href = `https://wa.me/6282114596083?text=${encodeURIComponent(message)}`;
+
+    } catch (err) {
+      alert("⚠️ Ada masalah koneksi ke server. Coba lagi atau hubungi admin.");
+      console.error("FATAL ERROR:", err);
+      setIsSubmitting(false);
     }
-
-    // 5. Kalau berhasil simpan database, lanjut kirim WA
-    const itemsText = cart
-      .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
-      .join('\n');
-
-    let paymentInfo = "";
-    if (paymentMethod === "cash") {
-      paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
-    } else if (paymentMethod === "transfer") {
-      paymentInfo = "Transfer (Minta Rekening/QRIS)";
-    } else if (paymentMethod === "tempo") {
-      paymentInfo = "Tempo (Member)";
-    }
-
-    let pointsMsg = "";
-    if (isPakaiPoin && nilaiDiskon > 0) {
-       pointsMsg = `\n\n🎟️ *KLAIM POIN MEMBER*\nUser Input: ${klaimPoinUser} Poin\nPotong Poin: -${jumlahYgBisaDitebus * 10} Poin\n(Gratis ${jumlahYgBisaDitebus} Galon)`;
-    } else if (eligiblePrices.length > 0) {
-       pointsMsg = "\n\n(Simpan struk ini untuk poin digital saya)";
-    }
-
-    const timeInfo = deliveryTime === "secepatnya" ? "SECEPATNYA (Saat ini juga)" : `JAM ${deliveryTime}`;
-
-    const message = `Halo Admin Rumah Alkaline, saya mau pesan:\n\n*👤 Nama:* ${namaPemesan}\n*📍 Alamat:* ${alamatPemesan}\n\n${itemsText}\n\n*Subtotal: Rp ${subtotal.toLocaleString()}*\n*Potongan Poin: -Rp ${nilaiDiskon.toLocaleString()}*\n*Total Bayar: Rp ${totalAmount.toLocaleString()}*\n\n----------------\n💳 Pembayaran: ${paymentMethod.toUpperCase()}\n⏰ Waktu Kirim: ${timeInfo}\n📝 Detail: ${paymentInfo}${pointsMsg}\n----------------\n\nTerima Kasih.`;
-
-    // --- POSISI KODE YANG BENAR (DI DALAM HANDLECHECKOUT) ---
-    // 1. Kosongkan keranjang
-    setCart([]); 
-    
-    // 2. Munculkan pop-up
-    alert("Hore! Pesanan berhasil dicatat. Klik OK untuk lanjut kirim pesan di WhatsApp ya! 🎉");
-
-    // 3. Buka WhatsApp
-    window.open(`https://wa.me/6282114596083?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
@@ -225,7 +305,6 @@ export default function Home() {
       {/* --- NAVBAR --- */}
       <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-40 border-b border-slate-100">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          
           <div className="flex items-center gap-2 select-none">
             <div className={`p-2 rounded-lg shadow-sm transition-all duration-300 ${bukaRahasia ? 'bg-orange-500' : 'bg-blue-500'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -248,7 +327,7 @@ export default function Home() {
                   if (confirmLogout) setBukaRahasia(false);
                 } else {
                   const sandi = prompt("Masukkan Kode Khusus Member:");
-                  if (sandi === "Rumah alkaline 123") {
+                  if (sandi === "Rumah alkaline aja") {
                     setBukaRahasia(true);
                     alert("✅ Berhasil! Produk S+ & Organik sudah muncul.");
                   } else if (sandi !== null) {
@@ -261,10 +340,7 @@ export default function Home() {
               {bukaRahasia ? "🔓 Agen Aktif" : "🔐 Masuk Member"}
             </button>
 
-            <div 
-              className="relative cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-all"
-              onClick={() => setIsCartOpen(true)}
-            >
+            <div className="relative cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-all" onClick={() => setIsCartOpen(true)}>
               <div className="relative">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -296,15 +372,14 @@ export default function Home() {
             Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
           </p>
 
-          {/* BANNER PROMO */}
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 max-w-2xl mx-auto relative overflow-hidden shadow-lg">
             <h3 className="text-2xl font-extrabold text-yellow-800 mb-2">🎉 Program Loyalitas Pelanggan</h3>
             <p className="text-yellow-900 mb-4 font-medium">
-              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong> 
+              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong>
               {bukaRahasia ? <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span> : <span> (seperti Deo Oxy).</span>}
             </p>
             <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
-              <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Gratis 1 Galon! 🎁</span>
+              <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Potongan Rp 15.000! 🎁</span>
             </div>
           </div>
         </div>
@@ -313,42 +388,22 @@ export default function Home() {
       {/* --- TUTORIAL CARA PESAN --- */}
       <div className="container mx-auto px-4 mb-16 mt-4">
         <div className="max-w-4xl mx-auto p-6 bg-blue-50 border border-blue-100 rounded-2xl shadow-sm">
-          <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800 mb-6">
-            ✨ Cara Mudah Pesan Air ✨
-          </h3>
-          
+          <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800 mb-6">✨ Cara Mudah Pesan Air ✨</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Langkah 1 */}
             <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
-              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-4">
-                👆
-              </div>
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-4">👆</div>
               <h4 className="text-lg font-bold text-slate-800 mb-2">1. Pilih Air</h4>
-              <p className="text-sm text-slate-600">
-                Gulir (scroll) ke bawah, pilih air kesukaan Anda lalu klik <b>tombol biru (+)</b> di kotak produk.
-              </p>
+              <p className="text-sm text-slate-600">Gulir ke bawah, pilih air kesukaan Anda lalu klik <b>tombol biru (+)</b> di kotak produk.</p>
             </div>
-
-            {/* Langkah 2 */}
             <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
-              <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center text-3xl mb-4">
-                🛒
-              </div>
+              <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center text-3xl mb-4">🛒</div>
               <h4 className="text-lg font-bold text-slate-800 mb-2">2. Atur Pesanan</h4>
-              <p className="text-sm text-slate-600">
-                Buka ikon keranjang di pojok kanan atas. Atur jumlah galon dan tulis info pengiriman.
-              </p>
+              <p className="text-sm text-slate-600">Buka ikon keranjang di pojok kanan atas. Atur jumlah galon dan tulis info pengiriman.</p>
             </div>
-
-            {/* Langkah 3 */}
             <div className="flex flex-col items-center text-center p-5 bg-white rounded-xl shadow-sm border border-slate-100">
-              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-3xl mb-4">
-                📱
-              </div>
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-3xl mb-4">📱</div>
               <h4 className="text-lg font-bold text-slate-800 mb-2">3. Kirim via WA</h4>
-              <p className="text-sm text-slate-600">
-                Klik tombol <b>Pesan via WA</b>. Pesanan otomatis tercatat dan terkirim ke WhatsApp!
-              </p>
+              <p className="text-sm text-slate-600">Klik tombol <b>Pesan via WA</b>. Pesanan otomatis tercatat dan terkirim ke WhatsApp!</p>
             </div>
           </div>
         </div>
@@ -365,9 +420,7 @@ export default function Home() {
             <ul className="space-y-6">
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Teknologi Filtrasi Terbaik</h3>
@@ -376,9 +429,7 @@ export default function Home() {
               </li>
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Bebas Bakteri & Higienis</h3>
@@ -387,9 +438,7 @@ export default function Home() {
               </li>
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">pH Seimbang (Alkaline)</h3>
@@ -406,7 +455,6 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto px-4 mb-16">
             <h2 className="text-xl font-bold text-center mb-4 text-slate-700">Galeri Kami</h2>
-            
             <div className="relative h-[300px] md:h-[500px] rounded-2xl overflow-hidden shadow-lg border border-slate-200 group">
               {slideImages.map((img, index) => (
                 <div key={index} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === slideIndex ? "opacity-100" : "opacity-0"}`}>
@@ -484,7 +532,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- KERANJANG (SIDEBAR KESELURUHAN) --- */}
+      {/* --- KERANJANG (SIDEBAR) --- */}
       <div className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full relative">
           
@@ -495,7 +543,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* LIST ITEM & FORM */}
           <div className="flex-1 overflow-y-auto p-5">
             {cart.length === 0 ? (
               <div className="text-center text-slate-400 mt-20">
@@ -528,40 +575,92 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* 2. Form NAMA & ALAMAT (TAMBAHAN BARU) */}
+                {/* 2. Form NAMA, WA, & ALAMAT */}
                 <div className="bg-white p-4 border rounded-xl shadow-sm border-blue-200">
-                  <label className="font-bold text-sm text-gray-800 block mb-2">👤 Data Pengiriman:</label>
-                  <input 
-                    type="text" 
-                    value={namaPemesan} 
-                    onChange={(e) => setNamaPemesan(e.target.value)} 
-                    placeholder="Nama Anda" 
-                    className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 bg-slate-50" 
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="font-bold text-sm text-gray-800">👤 Data Pengiriman:</label>
+                    {/* Badge Info Member/Baru */}
+                    {noWaPemesan.length >= 10 && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusPembeli === "Member" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>
+                        {statusPembeli === "Member" ? "👑 Member" : "🆕 Baru"}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <input
+                    type="text"
+                    value={namaPemesan}
+                    onChange={(e) => setNamaPemesan(e.target.value)}
+                    placeholder="Nama Anda"
+                    className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 bg-slate-50"
                     required
                   />
-                  <textarea 
-                    value={alamatPemesan} 
-                    onChange={(e) => setAlamatPemesan(e.target.value)} 
-                    placeholder="Alamat Lengkap (Contoh: Blok A No 12)" 
-                    className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50" 
+                  <input
+                    type="tel"
+                    value={noWaPemesan}
+                    onChange={(e) => setNoWaPemesan(e.target.value)}
+                    placeholder="Nomor WhatsApp (Cth: 081234...)"
+                    className="w-full border p-2 rounded-lg mb-1 text-sm outline-none focus:border-blue-500 bg-slate-50"
+                    required
+                  />
+                  <div className="flex justify-between items-center mb-3">
+                    <p className="text-[10px] text-blue-600 italic">*WA ini jadi identitas poin Anda.</p>
+                    {noWaPemesan.length >= 10 && (
+                      <p className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded shadow-sm border border-green-100">
+                        ✨ Saldo: {userPoints} Poin
+                      </p>
+                    )}
+                  </div>
+                  
+                  <textarea
+                    value={alamatPemesan}
+                    onChange={(e) => setAlamatPemesan(e.target.value)}
+                    placeholder="Alamat Lengkap (Contoh: Blok A No 12)"
+                    className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50"
                     rows="2"
                     required
                   ></textarea>
                 </div>
 
                 {/* 3. Form Poin Member */}
-                <div className="bg-[#FFFCE8] p-4 rounded-xl border border-yellow-200">
+                <div className={`p-4 rounded-xl border ${bisaTukarPoin ? "bg-[#FFFCE8] border-yellow-200" : "bg-gray-100 border-gray-300"}`}>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="font-bold text-sm text-gray-800 flex items-center gap-2">🎟️ Tukar Poin Member?</label>
-                    <input type="checkbox" checked={isPakaiPoin} onChange={(e) => setIsPakaiPoin(e.target.checked)} className="w-4 h-4 cursor-pointer" />
+                    <label className={`font-bold text-sm flex items-center gap-2 ${bisaTukarPoin ? "text-gray-800" : "text-gray-400"}`}>
+                      🎟️ Tukar Poin Member?
+                    </label>
+                    <input 
+                      type="checkbox" 
+                      checked={isPakaiPoin && bisaTukarPoin} 
+                      onChange={(e) => setIsPakaiPoin(e.target.checked)} 
+                      disabled={!bisaTukarPoin}
+                      className={`w-4 h-4 ${bisaTukarPoin ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`} 
+                    />
                   </div>
-                  {isPakaiPoin && (
-                    <div className="flex gap-3 items-center mt-3">
-                      <input type="number" value={klaimPoinUser || ""} onChange={(e) => setKlaimPoinUser(Number(e.target.value))} placeholder="0" className="border p-2 rounded-lg w-20 text-center outline-none focus:border-blue-500" />
-                      <span className="text-xs text-gray-600 leading-tight">Masukan saldo poin untuk ditukar galon gratis.</span>
+                  
+                  {!bisaTukarPoin && (
+                    <p className="text-[11px] text-red-500 font-medium leading-tight mt-1 mb-2">
+                      *Maaf, tukar poin hanya berlaku untuk pembelian produk Deo (Oxy) atau Organik.
+                    </p>
+                  )}
+
+                  {isPakaiPoin && bisaTukarPoin && (
+                    <div className="flex gap-3 items-center mt-3 bg-white p-2 rounded border border-yellow-100">
+                      <input
+                        type="number"
+                        value={klaimPoinUser || ""}
+                        onChange={(e) => {
+                          let val = Number(e.target.value);
+                          if (val > userPoints) val = userPoints;
+                          setKlaimPoinUser(val);
+                        }}
+                        max={userPoints}
+                        placeholder="0"
+                        className="border p-2 rounded-lg w-20 text-center outline-none focus:border-blue-500"
+                      />
+                      <span className="text-xs text-gray-600 leading-tight">Masukan poin (Maks: {userPoints}).<br/>10 Poin = Diskon Rp 15.000!</span>
                     </div>
                   )}
-                  <p className="text-[10px] text-gray-400 mt-2 italic">*Admin akan memverifikasi saldo poin Anda via WhatsApp.</p>
+                  <p className="text-[10px] text-gray-400 mt-2 italic">*Poin otomatis dipotong/ditambah dari database.</p>
                 </div>
 
                 {/* 4. Form Metode Pembayaran */}
@@ -570,10 +669,27 @@ export default function Home() {
                   <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
                     <option value="cash">💵 Tunai (COD)</option>
                     <option value="transfer">💳 Transfer Bank / QRIS</option>
-                    <option value="tempo">📝 Tempo (Khusus Agen)</option>
+                    
+                    {/* INI KUNCINYA: Opsi Tempo cuma muncul kalau statusnya Member */}
+                    {statusPembeli === "Member" && (
+                      <option value="tempo">📝 Tempo (Khusus Agen)</option>
+                    )}
                   </select>
+
+                  {/* Input kembalian kalau pilih Cash */}
                   {paymentMethod === "cash" && (
                     <input type="text" value={cashNote} onChange={(e) => setCashNote(e.target.value)} placeholder="Butuh kembalian dari uang berapa? (Misal: 50rb)" className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500" />
+                  )}
+
+                  {/* KOTAK SUB-PILIHAN KHUSUS JADWAL TEMPO */}
+                  {paymentMethod === "tempo" && statusPembeli === "Member" && (
+                    <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <label className="font-bold text-xs text-orange-800 block mb-2">🗓️ Pilih Jadwal Bayar:</label>
+                      <select value={jadwalTempo} onChange={(e) => setJadwalTempo(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-orange-500 bg-white">
+                        <option value="Akhir Minggu (Sabtu/Minggu)">Mingguan (Akhir Minggu - Sabtu/Minggu)</option>
+                        <option value="Sebulan Sekali (Awal/Akhir Bulan)">Bulanan (Sebulan Sekali - Awal/Akhir Bulan)</option>
+                      </select>
+                    </div>
                   )}
                 </div>
 
@@ -600,11 +716,11 @@ export default function Home() {
             )}
           </div>
 
-          {/* --- BAGIAN CHECKOUT (SEKARANG MENYATU DI DALAM SIDEBAR) --- */}
+          {/* --- BAGIAN CHECKOUT --- */}
           {cart.length > 0 && (
             <div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
               {/* Tampilkan info diskon */}
-              {isPakaiPoin && nilaiDiskon > 0 && (
+              {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && (
                 <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
                   ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
                 </div>
@@ -615,7 +731,7 @@ export default function Home() {
                 <span className="text-xl font-bold text-slate-800">Rp {totalAmount.toLocaleString('id-ID')}</span>
               </div>
 
-              <button 
+              <button
                 onClick={handleCheckout}
                 disabled={!isTokoBuka || cart.length === 0 || isSubmitting}
                 className={`w-full py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${
@@ -624,7 +740,6 @@ export default function Home() {
                     : "bg-gray-400 cursor-not-allowed text-gray-200"
                 }`}
               >
-                {/* Icon kecil panah/kirim */}
                 {!isSubmitting && (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
@@ -661,7 +776,7 @@ export default function Home() {
               <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
                 <p className="font-bold text-white mb-2">Perumahan Buana Asri, Karawang Timur</p>
                 <p className="text-sm mb-4">Pajajaran II, Blok A14 No 11</p>
-                <a href="https://goo.gl/maps/xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm font-bold hover:text-blue-300 flex items-center gap-1 transition-colors">
+                <a href="https://maps.app.goo.gl/DGDNrqNAcW4q25fN7" target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm font-bold hover:text-blue-300 flex items-center gap-1 transition-colors">
                   Lihat di Google Maps →
                 </a>
               </div>
@@ -685,13 +800,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Copyright Bawah */}
           <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
             © 2026 Rumah Alkaline. Solusi Air Sehat Keluarga.
           </div>
         </div>
       </footer>
-
     </div>
   );
 }

@@ -1,97 +1,200 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function AdminDashboard() {
-  // --- STATE UNTUK KEAMANAN (LOGIN) ---
+  // --- STATE UNTUK LOGIN ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [loginError, setLoginError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Ini adalah password rahasia kamu. Boleh diganti sesuai selera nanti!
-  const PASSWORD_RAHASIA = "admin123";
-
-  // --- STATE UNTUK DATA PESANAN ---
+  // --- STATE UNTUK DATA ---
   const [pesanan, setPesanan] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [pelanggan, setPelanggan] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('pesanan'); // Tab: pesanan, riwayat, pelanggan
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // --- FUNGSI PROSES LOGIN ---
+  useEffect(() => {
+    const checkLogin = localStorage.getItem('isRumahAlkalineAdmin');
+    if (checkLogin === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleLogin = (e) => {
-    e.preventDefault(); // Biar web nggak kedip (refresh) pas tekan Enter
-    
-    if (passwordInput === PASSWORD_RAHASIA) {
-      setIsAuthenticated(true); // Gembok terbuka!
-      setLoginError('');
-      fetchPesanan(); // Langsung tarik data pesanan dari Supabase
+    e.preventDefault();
+    if (passwordInput === 'admin123') {
+      setIsAuthenticated(true);
+      localStorage.setItem('isRumahAlkalineAdmin', 'true');
+      setLoginError(false);
     } else {
-      setLoginError('Duh, passwordnya salah! Coba ingat-ingat lagi.');
+      setLoginError(true);
     }
   };
 
-  // --- FUNGSI TARIK DATA (Sama kayak sebelumnya) ---
-  const fetchPesanan = async () => {
+  const handleLogout = () => {
+    const confirm = window.confirm("Yakin ingin keluar dari Dashboard?");
+    if (confirm) {
+      setIsAuthenticated(false);
+      localStorage.removeItem('isRumahAlkalineAdmin');
+      setPasswordInput('');
+    }
+  };
+
+  const fetchData = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('pesanan')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data: dataPesanan, error: errPesanan } = await supabase
+        .from('pesanan')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (errPesanan) console.error("Error ambil pesanan:", errPesanan);
+      else setPesanan(dataPesanan);
 
-    if (error) {
-      console.error("Gagal menarik data:", error);
-      alert("Gagal menarik data pesanan.");
-    } else {
-      setPesanan(data);
+      const { data: dataPelanggan, error: errPelanggan } = await supabase
+        .from('pelanggan')
+        .select('*')
+        .order('total_poin', { ascending: false });
+      if (errPelanggan) console.error("Error ambil pelanggan:", errPelanggan);
+      else setPelanggan(dataPelanggan);
+    } catch (error) {
+      console.error("Terjadi kesalahan:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  // --- FUNGSI SELESAIKAN PESANAN (Sama kayak sebelumnya) ---
-  const handleSelesaikan = async (id) => {
-    const konfirmasi = window.confirm("Apakah pesanan ini sudah selesai diantar dan ingin dihapus dari daftar?");
-    
-    if (konfirmasi) {
-      const { error } = await supabase
-        .from('pesanan')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        alert("Gagal menyelesaikan pesanan.");
-      } else {
-        setPesanan(pesanan.filter((item) => item.id !== id));
-      }
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
     }
+  }, [isAuthenticated]);
+
+  // --- FUNGSI UPDATE STATUS PESANAN (TIDAK ADA LAGI HAPUS DATA) ---
+  const updateStatusPesanan = async (id, statusBaru) => {
+    let konfirmasi = true;
+    if (statusBaru === 'Selesai') {
+      konfirmasi = window.confirm("Tandai pesanan ini sudah selesai? (Akan dipindah ke tab Riwayat)");
+    }
+
+    if (konfirmasi) {
+      const { error } = await supabase.from('pesanan').update({ status_pesanan: statusBaru }).eq('id', id);
+      if (error) {
+        alert("Gagal update status! Penyebab: " + error.message);
+        console.error(error);
+      } else {
+        fetchData(); // Refresh data
+      }
+    } else {
+      fetchData(); // Kembalikan dropdown ke awal jika batal
+    }
+  };
+
+  // --- FILTERING DATA PENCARIAN & TAB ---
+  const filteredPesananGlobal = pesanan.filter((p) => 
+    p.nama?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.no_wa?.includes(searchQuery)
+  );
+
+  // Pisahkan pesanan aktif dan pesanan selesai
+  const pesananAktif = filteredPesananGlobal.filter(p => p.status_pesanan !== 'Selesai');
+  const pesananSelesai = filteredPesananGlobal.filter(p => p.status_pesanan === 'Selesai');
+
+  const filteredPelanggan = pelanggan.filter((user) => 
+    user.nama?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.no_wa?.includes(searchQuery)
+  );
+
+  // --- EXPORT DATA BERDASARKAN TAB YANG AKTIF ---
+  const handleExportCSV = () => {
+    let dataToExport = [];
+    let fileName = '';
+
+    if (activeTab === 'pesanan') {
+      dataToExport = pesananAktif;
+      fileName = 'Laporan_Pesanan_Aktif.csv';
+    } else if (activeTab === 'riwayat') {
+      dataToExport = pesananSelesai;
+      fileName = 'Laporan_Riwayat_Selesai.csv';
+    } else {
+      dataToExport = filteredPelanggan;
+      fileName = 'Laporan_Pelanggan.csv';
+    }
+
+    if (dataToExport.length === 0) {
+      alert("Tidak ada data untuk di-export!");
+      return;
+    }
+
+    const headers = Object.keys(dataToExport[0]).join(',');
+    const csvRows = dataToExport.map(row => 
+      Object.values(row).map(val => {
+        let str = String(val !== null && val !== undefined ? val : '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          str = `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(',')
+    );
+
+    const csvContent = [headers, ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // ==========================================
-  // 1. TAMPILAN JIKA BELUM LOGIN (HALAMAN GEMBOK)
+  // TAMPILAN JIKA BELUM LOGIN
   // ==========================================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border border-slate-100 text-center">
-          <div className="text-6xl mb-4 animate-bounce">🔐</div>
-          <h1 className="text-2xl font-extrabold text-slate-800 mb-2">Area Terbatas</h1>
-          <p className="text-slate-500 text-sm mb-6">Silakan masukkan password admin untuk melihat data pesanan.</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 max-w-md w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">💧 Rumah Alkaline</h1>
+            <p className="text-slate-500 text-sm">Silakan masukkan password untuk masuk ke Dashboard Admin.</p>
+          </div>
           
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <input 
-                type="password" 
-                placeholder="Masukkan Password..."
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 outline-none text-center font-bold tracking-widest transition-colors"
-              />
+          <form onSubmit={handleLogin}>
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Password Admin</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Masukkan password..."
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  )}
+                </button>
+              </div>
               {loginError && (
-                <p className="text-red-500 text-sm font-medium mt-2 animate-pulse">{loginError}</p>
+                <p className="text-red-500 text-xs font-bold mt-2">❌ Password salah! Coba lagi.</p>
               )}
             </div>
             <button 
               type="submit"
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
             >
-              Buka Gembok 🔓
+              Masuk Dashboard 🚀
             </button>
           </form>
         </div>
@@ -99,119 +202,173 @@ export default function AdminDashboard() {
     );
   }
 
+  // --- KOMPONEN TABEL PESANAN (Biar kodenya nggak kepanjangan diulang-ulang) ---
+  const TabelPesanan = ({ dataPesanan }) => {
+    if (dataPesanan.length === 0) {
+      return (
+        <div className="p-10 text-center text-slate-500 font-bold">
+          Tidak ada data. 💤
+        </div>
+      );
+    }
+
+    return (
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b">
+            <th className="p-4 font-bold">Waktu Pesan</th>
+            <th className="p-4 font-bold">Pelanggan</th>
+            <th className="p-4 font-bold">Pesanan</th>
+            <th className="p-4 font-bold">Total Bayar</th>
+            <th className="p-4 font-bold text-center">Status Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {dataPesanan.map((p) => {
+            const tgl = new Date(p.created_at).toLocaleString('id-ID', {
+              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+            
+            return (
+              <tr key={p.id} className={`transition-colors ${p.status_pesanan === 'Selesai' ? 'bg-green-50/30' : 'hover:bg-slate-50'}`}>
+                <td className="p-4 text-sm text-slate-600">{tgl} WIB</td>
+                <td className="p-4">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-slate-800">{p.nama}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                      p.tipe_pembeli === 'Member' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {p.tipe_pembeli || 'Baru'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 flex items-center gap-1">📍 {p.alamat}</p>
+                  <p className="text-xs text-blue-500 font-medium mt-1">📱 {p.no_wa}</p>
+                </td>
+                <td className="p-4">
+                  <p className="font-bold text-blue-600">{p.jumlah} Galon</p>
+                  <p className="text-xs text-slate-500">{p.jenis_air}</p>
+                </td>
+                <td className="p-4">
+                  <p className="font-bold text-slate-800">Rp {p.jumlah_bayar?.toLocaleString('id-ID') || 0}</p>
+                  <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase">
+                    {p.metode_pembayaran || 'CASH'}
+                  </span>
+                </td>
+                <td className="p-4 text-center">
+                  <select
+                    value={p.status_pesanan || 'Menunggu'}
+                    onChange={(e) => updateStatusPesanan(p.id, e.target.value)}
+                    className={`text-xs font-bold px-3 py-2 rounded-lg shadow-sm border focus:outline-none cursor-pointer appearance-none text-center ${
+                      p.status_pesanan === 'Selesai' ? 'bg-green-100 text-green-700 border-green-300' :
+                      p.status_pesanan === 'Sedang Dikirim' ? 'bg-blue-100 text-blue-700 border-blue-300' : 
+                      'bg-yellow-100 text-yellow-700 border-yellow-300'
+                    }`}
+                  >
+                    <option value="Menunggu">⏳ Menunggu</option>
+                    <option value="Sedang Dikirim">🛵 Sedang Dikirim</option>
+                    <option value="Selesai">✅ Selesai</option>
+                  </select>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
+
   // ==========================================
-  // 2. TAMPILAN JIKA SUDAH LOGIN (DASHBOARD UTAMA)
+  // TAMPILAN DASHBOARD
   // ==========================================
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 p-6 font-sans">
+      <div className="max-w-6xl mx-auto">
         
         {/* --- HEADER ADMIN --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 flex items-center gap-2">
-              📦 Dashboard Admin
-            </h1>
-            <p className="text-slate-500 mt-1 text-sm md:text-base">Pantau dan kelola pesanan masuk di sini.</p>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">📦 Dashboard Admin</h1>
+            <p className="text-slate-500 text-sm mt-1">Pantau pesanan dan kelola poin pelanggan di sini.</p>
           </div>
-          <div className="flex gap-3 mt-4 md:mt-0">
-            <button 
-              onClick={fetchPesanan}
-              className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 active:scale-95"
-            >
-              🔄 Refresh Data
-            </button>
-            <button 
-              onClick={() => setIsAuthenticated(false)}
-              className="bg-red-100 hover:bg-red-200 text-red-700 px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 active:scale-95"
-            >
-              Keluar 🚪
-            </button>
+          <div className="flex gap-3">
+            <button onClick={handleExportCSV} className="px-4 py-2 bg-green-50 text-green-600 font-bold rounded-lg border border-green-200 hover:bg-green-100 flex items-center gap-2">📥 Export Data</button>
+            <button onClick={fetchData} className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-2">🔄 Refresh Data</button>
+            <button onClick={handleLogout} className="px-4 py-2 bg-red-50 text-red-600 font-bold rounded-lg border border-red-200 hover:bg-red-100 flex items-center gap-2">🚪 Keluar</button>
           </div>
         </div>
 
-        {/* --- TABEL PESANAN --- */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-600 text-sm uppercase tracking-wider">
-                  <th className="p-4 font-bold border-b border-slate-200">Waktu Pesan</th>
-                  <th className="p-4 font-bold border-b border-slate-200">Pelanggan</th>
-                  <th className="p-4 font-bold border-b border-slate-200">Pesanan</th>
-                  <th className="p-4 font-bold border-b border-slate-200">Pengantaran</th>
-                  <th className="p-4 font-bold border-b border-slate-200">Total Bayar</th>
-                  <th className="p-4 font-bold border-b border-slate-200 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                
-                {isLoading ? (
-                  <tr>
-                    <td colSpan="6" className="p-10 text-center text-slate-500 font-medium">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <span className="text-2xl animate-spin">⏳</span>
-                        Sedang menarik data dari database...
-                      </div>
-                    </td>
-                  </tr>
-                ) : pesanan.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="p-10 text-center text-slate-500 font-medium">
-                      Yeay! Semua pesanan sudah diselesaikan hari ini 🍃
-                    </td>
-                  </tr>
+        {/* --- NAVIGASI TAB --- */}
+        <div className="flex flex-wrap gap-4 mb-4">
+          <button 
+            onClick={() => { setActiveTab('pesanan'); setSearchQuery(''); }}
+            className={`px-6 py-3 rounded-xl font-bold shadow-sm ${activeTab === 'pesanan' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
+          >
+            📋 Pesanan Aktif ({pesananAktif.length})
+          </button>
+          <button 
+            onClick={() => { setActiveTab('riwayat'); setSearchQuery(''); }}
+            className={`px-6 py-3 rounded-xl font-bold shadow-sm ${activeTab === 'riwayat' ? 'bg-green-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
+          >
+            ✅ Riwayat Selesai ({pesananSelesai.length})
+          </button>
+          <button 
+            onClick={() => { setActiveTab('pelanggan'); setSearchQuery(''); }}
+            className={`px-6 py-3 rounded-xl font-bold shadow-sm ${activeTab === 'pelanggan' ? 'bg-purple-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
+          >
+            👥 Data Pelanggan ({pelanggan.length})
+          </button>
+        </div>
+
+        {/* --- KOLOM PENCARIAN --- */}
+        <div className="mb-6">
+          <input 
+            type="text" 
+            placeholder="🔍 Cari nama atau no WA..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full md:w-1/2 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          />
+        </div>
+
+        {/* --- KONTEN BAWAH --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          {isLoading ? (
+            <div className="p-10 text-center text-slate-500 font-bold">Memuat data... ⏳</div>
+          ) : (
+            <>
+              {activeTab === 'pesanan' && <TabelPesanan dataPesanan={pesananAktif} />}
+              {activeTab === 'riwayat' && <TabelPesanan dataPesanan={pesananSelesai} />}
+              
+              {activeTab === 'pelanggan' && (
+                filteredPelanggan.length === 0 ? (
+                  <div className="p-10 text-center text-slate-500 font-bold">Tidak ada data pelanggan. 🕵️‍♂️</div>
                 ) : (
-                  pesanan.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                      
-                      <td className="p-4 text-sm text-slate-600 whitespace-nowrap">
-                        {new Date(item.created_at).toLocaleString('id-ID', {
-                          day: 'numeric', month: 'short',
-                          hour: '2-digit', minute: '2-digit'
-                        })} WIB
-                      </td>
-                      
-                      <td className="p-4">
-                        <div className="font-bold text-slate-800">{item.nama}</div>
-                        <div className="text-xs text-slate-500 mt-1 max-w-[150px] md:max-w-[200px] truncate" title={item.alamat}>
-                          📍 {item.alamat}
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="font-bold text-blue-600">{item.jumlah} Galon</div>
-                        <div className="text-xs text-slate-600 mt-1 font-medium">{item.jenis_air}</div>
-                      </td>
-
-                      <td className="p-4 text-sm text-slate-700 font-medium whitespace-nowrap">
-                        ⏰ {item.waktu_pengantaran || "Secepatnya"}
-                      </td>
-
-                      <td className="p-4">
-                        <div className="font-bold text-slate-800">
-                          Rp {item.jumlah_bayar ? item.jumlah_bayar.toLocaleString('id-ID') : '0'}
-                        </div>
-                        <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase bg-slate-100 inline-block px-2 py-0.5 rounded">
-                          💳 {item.metode_pembayaran || "Cash"}
-                        </div>
-                      </td>
-
-                      <td className="p-4 text-center">
-                        <button 
-                          onClick={() => handleSelesaikan(item.id)}
-                          className="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors active:scale-95"
-                        >
-                          ✅ Selesaikan
-                        </button>
-                      </td>
-
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b">
+                        <th className="p-4 font-bold">Nomor WA</th>
+                        <th className="p-4 font-bold">Nama Pelanggan</th>
+                        <th className="p-4 font-bold text-center">Total Poin</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredPelanggan.map((user) => (
+                        <tr key={user.no_wa} className="hover:bg-slate-50">
+                          <td className="p-4 text-sm font-bold text-slate-700 font-mono">{user.no_wa}</td>
+                          <td className="p-4 font-bold text-slate-800 uppercase">{user.nama}</td>
+                          <td className="p-4 text-center">
+                            <span className="inline-block bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full font-bold">
+                              ✨ {user.total_poin} Poin
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              )}
+            </>
+          )}
         </div>
 
       </div>
