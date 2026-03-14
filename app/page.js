@@ -90,8 +90,29 @@ export default function Home() {
   const [userPoints, setUserPoints] = useState(0); 
   const [statusPembeli, setStatusPembeli] = useState("Baru"); // <-- STATE BARU: Deteksi Pelanggan Baru / Member
 
-  // STATUS TOKO
-  const isTokoBuka = true;
+  // === STATUS TOKO DARI SUPABASE ===
+const [isTokoBuka, setIsTokoBuka] = useState(true); // Defaultnya kita anggap buka dulu pas pertama loading
+
+useEffect(() => {
+  const cekStatusToko = async () => {
+    try {
+      // Kita suruh kurir Supabase cek tabel 'store_settings'
+      const { data, error } = await supabase
+        .from('store_settings')
+        .select('is_open')
+        .eq('id', 1) // Sesuaikan dengan ID baris pengaturan tokomu
+        .single();
+        
+      if (data) {
+        setIsTokoBuka(data.is_open); // Update status toko sesuai database!
+      }
+    } catch (error) {
+      console.error("Gagal cek status toko:", error);
+    }
+  };
+
+  cekStatusToko(); // Jalankan fungsinya saat halaman pertama kali dibuka
+}, []);
 
   // === DATA GAMBAR SLIDER ===
   const slideImages = [
