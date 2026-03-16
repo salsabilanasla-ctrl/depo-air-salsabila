@@ -75,7 +75,7 @@ export default function Home() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [cashNote, setCashNote] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("Satu Jam Setelah Pemesanan");
-  const [jadwalTempo, setJadwalTempo] = useState("Akhir Minggu (Sabtu/Minggu)"); // <-- STATE BARU: Jadwal Tempo
+  const [jadwalTempo, setJadwalTempo] = useState("Akhir Minggu (Sabtu/Minggu)");
 
   // STATE FITUR AGEN & POIN
   const [bukaRahasia, setBukaRahasia] = useState(false);
@@ -88,31 +88,61 @@ export default function Home() {
   const [noWaPemesan, setNoWaPemesan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userPoints, setUserPoints] = useState(0); 
-  const [statusPembeli, setStatusPembeli] = useState("Baru"); // <-- STATE BARU: Deteksi Pelanggan Baru / Member
+  const [statusPembeli, setStatusPembeli] = useState("Baru"); 
 
   // === STATUS TOKO DARI SUPABASE ===
-const [isTokoBuka, setIsTokoBuka] = useState(true); // Defaultnya kita anggap buka dulu pas pertama loading
+  const [isTokoBuka, setIsTokoBuka] = useState(true);
 
-useEffect(() => {
-  const cekStatusToko = async () => {
+  // === STATE KHUSUS CEK POIN DI KERANJANG ===
+  const [cekWaPoin, setCekWaPoin] = useState("");
+  const [hasilCekPoin, setHasilCekPoin] = useState(null);
+  const [loadingCekPoin, setLoadingCekPoin] = useState(false);
+
+  // --- FUNGSI TOMBOL CEK POIN ---
+  const handleCekPoin = async (e) => {
+    e.preventDefault(); 
+    if (cekWaPoin.length < 10) return alert("Masukkan nomor WA yang valid ya! (Min. 10 angka)");
+    
+    setLoadingCekPoin(true);
+    setHasilCekPoin(null); 
+
     try {
-      // Kita suruh kurir Supabase cek tabel 'store_settings'
       const { data, error } = await supabase
-        .from('store_settings')
-        .select('is_open')
-        .eq('id', 1) // Sesuaikan dengan ID baris pengaturan tokomu
+        .from('pelanggan')
+        .select('nama, total_poin')
+        .eq('no_wa', cekWaPoin)
         .single();
-        
+
       if (data) {
-        setIsTokoBuka(data.is_open); // Update status toko sesuai database!
+        setHasilCekPoin({ nama: data.nama, poin: data.total_poin });
+      } else {
+        setHasilCekPoin(false); 
       }
     } catch (error) {
-      console.error("Gagal cek status toko:", error);
+      console.error("Gagal cari poin:", error);
+      setHasilCekPoin(false);
     }
+    setLoadingCekPoin(false);
   };
 
-  cekStatusToko(); // Jalankan fungsinya saat halaman pertama kali dibuka
-}, []);
+  useEffect(() => {
+    const cekStatusToko = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('store_settings')
+          .select('is_open')
+          .eq('id', 1) 
+          .single();
+          
+        if (data) {
+          setIsTokoBuka(data.is_open); 
+        }
+      } catch (error) {
+        console.error("Gagal cek status toko:", error);
+      }
+    };
+    cekStatusToko(); 
+  }, []);
 
   // === DATA GAMBAR SLIDER ===
   const slideImages = [
@@ -132,11 +162,9 @@ useEffect(() => {
           .single();
 
         if (data) {
-          // Kalau nomor WA udah ada di database
           setUserPoints(data.total_poin || 0);
           setStatusPembeli("Member"); 
         } else {
-          // Kalau nomor WA belum ada, TAPI dia udah masukin password rahasia
           setUserPoints(0);
           setStatusPembeli(bukaRahasia ? "Member" : "Baru"); 
         }
@@ -156,7 +184,7 @@ useEffect(() => {
   // --- EFEK BARU: RESET TEMPO KALAU KETAHUAN BUKAN MEMBER ---
   useEffect(() => {
     if (statusPembeli === "Baru" && paymentMethod === "tempo") {
-      setPaymentMethod("cash"); // Otomatis balik ke cash
+      setPaymentMethod("cash"); 
     }
   }, [statusPembeli, paymentMethod]);
 
@@ -187,6 +215,14 @@ useEffect(() => {
   // --- CEK APAKAH ADA PRODUK YANG BISA TUKAR POIN DI KERANJANG ---
   const bisaTukarPoin = cart.some((item) => item.hasPoints);
 
+  // Reset opsi pakai poin kalau itemnya dihapus dari keranjang
+  useEffect(() => {
+    if (!bisaTukarPoin) {
+      setIsPakaiPoin(false);
+      setKlaimPoinUser(0);
+    }
+  }, [bisaTukarPoin]);
+
   // --- LOGIKA HITUNG HARGA & POIN ---
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
@@ -211,7 +247,7 @@ useEffect(() => {
 
   const totalAmount = subtotal > nilaiDiskon ? subtotal - nilaiDiskon : 0;
 
-  // --- FUNGSI CHECKOUT DENGAN SUPABASE (VERSI UPGRADE) ---
+  // --- FUNGSI CHECKOUT DENGAN SUPABASE ---
   const handleCheckout = async () => {
     if (!namaPemesan || !noWaPemesan || !alamatPemesan) {
       alert("Halo! Tolong isi Nama, Nomor WhatsApp, dan Alamat pengiriman dulu ya biar pesanan dan poinnya aman! 🚚💨");
@@ -229,7 +265,7 @@ useEffect(() => {
     const totalGalon = cart.reduce((total, item) => total + item.qty, 0);
 
     try {
-      // 3. Simpan Pesanan ke Supabase
+      // Simpan Pesanan ke Supabase
       const { data: dataPesanan, error: errorPesanan } = await supabase
         .from('pesanan')
         .insert([
@@ -240,7 +276,7 @@ useEffect(() => {
             jumlah: totalGalon,
             alamat: alamatPemesan,
             tukar_poin: poinYangAkanDipotong,
-            metode_pembayaran: paymentMethod === "tempo" ? `Tempo (${jadwalTempo})` : paymentMethod, // <-- Jadwal Tempo Masuk Sini
+            metode_pembayaran: paymentMethod === "tempo" ? `Tempo (${jadwalTempo})` : paymentMethod, 
             jumlah_bayar: totalAmount,
             waktu_pengantaran: deliveryTime,
             tipe_pembeli: statusPembeli
@@ -255,7 +291,7 @@ useEffect(() => {
         return;
       }
 
-      // 4. Hitung dan Update Poin ke Tabel 'pelanggan'
+      // Hitung dan Update Poin ke Tabel 'pelanggan'
       let poinBaruDidapat = 0;
       if (!isPakaiPoin) {
         poinBaruDidapat = cart.reduce((total, item) => item.hasPoints ? total + item.qty : total, 0);
@@ -283,7 +319,7 @@ useEffect(() => {
         }
       }
 
-      // 5. Buat pesan WhatsApp
+      // Buat pesan WhatsApp
       const itemsText = cart
         .map((item) => `- ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}`)
         .join('\n');
@@ -291,7 +327,7 @@ useEffect(() => {
       let paymentInfo = "";
       if (paymentMethod === "cash") paymentInfo = `Tunai/Cash ${cashNote ? `(Uang saya: ${cashNote})` : ""}`;
       else if (paymentMethod === "transfer") paymentInfo = "Transfer (Minta Rekening/QRIS)";
-      else if (paymentMethod === "tempo") paymentInfo = `Tempo (Member)\n🗓️ Jadwal Bayar: ${jadwalTempo}`; // <-- Update ke WA Papah
+      else if (paymentMethod === "tempo") paymentInfo = `Tempo (Member)\n🗓️ Jadwal Bayar: ${jadwalTempo}`; 
 
       let pointsMsg = "";
       if (isPakaiPoin && nilaiDiskon > 0) {
@@ -616,22 +652,28 @@ useEffect(() => {
                     className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 bg-slate-50"
                     required
                   />
+                  
+                  {/* Margin bawah disesuaikan agar rapi kalau teks poinnya hilang */}
                   <input
                     type="tel"
                     value={noWaPemesan}
                     onChange={(e) => setNoWaPemesan(e.target.value)}
                     placeholder="Nomor WhatsApp (Cth: 081234...)"
-                    className="w-full border p-2 rounded-lg mb-1 text-sm outline-none focus:border-blue-500 bg-slate-50"
+                    className={`w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50 ${bisaTukarPoin ? 'mb-1' : 'mb-3'}`}
                     required
                   />
-                  <div className="flex justify-between items-center mb-3">
-                    <p className="text-[10px] text-blue-600 italic">*WA ini jadi identitas poin Anda.</p>
-                    {noWaPemesan.length >= 10 && (
-                      <p className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded shadow-sm border border-green-100">
-                        ✨ Saldo: {userPoints} Poin
-                      </p>
-                    )}
-                  </div>
+                  
+                  {/* --- INI KUNCINYA: CUMA MUNCUL KALAU ADA PRODUK POIN --- */}
+                  {bisaTukarPoin && (
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[10px] text-blue-600 italic">*WA ini jadi identitas poin Anda.</p>
+                      {noWaPemesan.length >= 10 && (
+                        <p className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded shadow-sm border border-green-100">
+                          ✨ Saldo: {userPoints} Poin
+                        </p>
+                      )}
+                    </div>
+                  )}
                   
                   <textarea
                     value={alamatPemesan}
@@ -643,46 +685,79 @@ useEffect(() => {
                   ></textarea>
                 </div>
 
-                {/* 3. Form Poin Member */}
-                <div className={`p-4 rounded-xl border ${bisaTukarPoin ? "bg-[#FFFCE8] border-yellow-200" : "bg-gray-100 border-gray-300"}`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className={`font-bold text-sm flex items-center gap-2 ${bisaTukarPoin ? "text-gray-800" : "text-gray-400"}`}>
-                      🎟️ Tukar Poin Member?
-                    </label>
-                    <input 
-                      type="checkbox" 
-                      checked={isPakaiPoin && bisaTukarPoin} 
-                      onChange={(e) => setIsPakaiPoin(e.target.checked)} 
-                      disabled={!bisaTukarPoin}
-                      className={`w-4 h-4 ${bisaTukarPoin ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`} 
-                    />
-                  </div>
-                  
-                  {!bisaTukarPoin && (
-                    <p className="text-[11px] text-red-500 font-medium leading-tight mt-1 mb-2">
-                      *Maaf, tukar poin hanya berlaku untuk pembelian produk Deo (Oxy) atau Organik.
-                    </p>
-                  )}
+                {/* 3. Fitur Cek & Tukar Poin (Hanya Muncul Jika Ada Produk Poin) */}
+                {bisaTukarPoin && (
+                  <div className="bg-[#FFFCE8] p-4 border border-yellow-200 rounded-xl shadow-sm">
+                    {/* --- Bagian Cek Poin --- */}
+                    <div className="mb-4 border-b border-yellow-200 pb-4">
+                      <h4 className="font-bold text-sm text-yellow-900 flex items-center gap-1 mb-2">
+                        🔍 Cek Tabungan Poin
+                      </h4>
+                      <form onSubmit={handleCekPoin} className="flex gap-2">
+                        <input
+                          type="tel"
+                          value={cekWaPoin}
+                          onChange={(e) => setCekWaPoin(e.target.value)}
+                          placeholder="No. WA (Cth: 0812...)"
+                          className="w-full border border-yellow-300 p-2 rounded-lg text-xs outline-none focus:border-yellow-500 bg-white"
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={loadingCekPoin}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:bg-slate-400 whitespace-nowrap"
+                        >
+                          {loadingCekPoin ? "Cek..." : "Cek Poin"}
+                        </button>
+                      </form>
 
-                  {isPakaiPoin && bisaTukarPoin && (
-                    <div className="flex gap-3 items-center mt-3 bg-white p-2 rounded border border-yellow-100">
-                      <input
-                        type="number"
-                        value={klaimPoinUser || ""}
-                        onChange={(e) => {
-                          let val = Number(e.target.value);
-                          if (val > userPoints) val = userPoints;
-                          setKlaimPoinUser(val);
-                        }}
-                        max={userPoints}
-                        placeholder="0"
-                        className="border p-2 rounded-lg w-20 text-center outline-none focus:border-blue-500"
-                      />
-                      <span className="text-xs text-gray-600 leading-tight">Masukan poin (Maks: {userPoints}).<br/>10 Poin = Diskon Rp 15.000!</span>
+                      {/* Hasil Cek Poin */}
+                      {hasilCekPoin !== null && (
+                        <div className={`mt-3 p-3 rounded-lg text-xs border ${hasilCekPoin === false ? "bg-red-50 text-red-700 border-red-200" : "bg-green-50 text-green-800 border-green-200"}`}>
+                          {hasilCekPoin === false ? (
+                            <p>Nomor WA belum terdaftar atau belum punya poin.</p>
+                          ) : (
+                            <p>Halo <b>{hasilCekPoin.nama}</b>! Poinmu saat ini: <b className="text-green-600 text-sm">{hasilCekPoin.poin} Poin</b></p>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <p className="text-[10px] text-gray-400 mt-2 italic">*Poin otomatis dipotong/ditambah dari database.</p>
-                </div>
+
+                    {/* --- Bagian Tukar Poin --- */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="font-bold text-sm text-yellow-900 flex items-center gap-2 cursor-pointer" onClick={() => setIsPakaiPoin(!isPakaiPoin)}>
+                          🎟️ Tukar Poin Member?
+                        </label>
+                        <input 
+                          type="checkbox" 
+                          checked={isPakaiPoin} 
+                          onChange={(e) => setIsPakaiPoin(e.target.checked)} 
+                          className="w-4 h-4 cursor-pointer accent-yellow-600" 
+                        />
+                      </div>
+                      
+                      {isPakaiPoin && (
+                        <div className="flex gap-2 items-center mt-3 bg-white p-2 rounded-lg border border-yellow-100">
+                          <input
+                            type="number"
+                            value={klaimPoinUser || ""}
+                            onChange={(e) => {
+                              let val = Number(e.target.value);
+                              if (val > userPoints) val = userPoints;
+                              setKlaimPoinUser(val);
+                            }}
+                            max={userPoints}
+                            placeholder="0"
+                            className="border border-yellow-300 p-2 rounded-md w-16 text-center text-sm outline-none focus:border-yellow-500"
+                          />
+                          <span className="text-[10px] text-gray-600 leading-tight">Maksimal: {userPoints} Poin.<br/>10 Poin = Diskon Rp 15.000</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-gray-500 mt-2 italic">*Poin otomatis dipotong/ditambah dari database.</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* 4. Form Metode Pembayaran */}
                 <div className="bg-white p-4 border rounded-xl shadow-sm">
