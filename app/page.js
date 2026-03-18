@@ -347,7 +347,7 @@ export default function Home() {
       setIsSubmitting(false);
 
       alert("✅ Hore! Pesanan berhasil dicatat di database. Klik OK untuk lanjut kirim pesan di WhatsApp ya! 🎉");
-      window.location.href = `https://wa.me/6282114596083?text=${encodeURIComponent(message)}`;
+      window.location.href = `https://wa.me/6282258521615?text=${encodeURIComponent(message)}`;
 
     } catch (err) {
       alert("⚠️ Ada masalah koneksi ke server. Coba lagi atau hubungi admin.");
