@@ -480,8 +480,8 @@ export default function Home() {
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Teknologi Filtrasi Terbaik</h3>
-                  <p className="text-slate-600 text-sm md:text-base">Teknologi filtrasi terbaik yang membuang zat berbahaya namun tetap mempertahankan mineral baik.</p>
+                  <h3 className="text-lg font-bold text-slate-800">Jaminan kualitas produk (produk dibawah standar diganti gratis)</h3>
+                  <p className="text-slate-600 text-sm md:text-base">Kepuasan Anda adalah prioritas kami. Jika Anda menerima produk dengan kualitas air atau kemasan di bawah standar, kami akan langsung menggantinya dengan yang baru secara GRATIS tanpa syarat ribet!</p>
                 </div>
               </li>
               <li className="flex items-start gap-4">
@@ -489,8 +489,8 @@ export default function Home() {
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Bebas Bakteri & Higienis</h3>
-                  <p className="text-slate-600 text-sm md:text-base">Galon dicuci dengan sterilisasi tinggi sebelum pengisian untuk menjamin kebersihan.</p>
+                  <h3 className="text-lg font-bold text-slate-800">Free ongkir karawang</h3>
+                  <p className="text-slate-600 text-sm md:text-base"> Biar kami yang repot di jalan, Anda tinggal tunggu di rumah! Nikmati layanan pesan antar secepat kilat tanpa biaya tambahan alias Free Ongkir, khusus untuk seluruh wilayah Karawang.</p>
                 </div>
               </li>
               <li className="flex items-start gap-4">
@@ -498,8 +498,8 @@ export default function Home() {
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">pH Seimbang (Alkaline)</h3>
-                  <p className="text-slate-600 text-sm md:text-base">Membantu menetralkan keasaman tubuh akibat pola makan dan gaya hidup.</p>
+                  <h3 className="text-lg font-bold text-slate-800">Galon Dipinjamkan</h3>
+                  <p className="text-slate-600 text-sm md:text-base">Mau langganan tapi belum punya galon kosong? Tenang saja! Kami meminjamkan galon secara cuma-cuma untuk Anda. Cukup bayar harga airnya saja, dan rasakan kepraktisannya.</p>
                 </div>
               </li>
             </ul>
