@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'; // INI KURIR SUPABASE-NYA
 const products = [
   {
     id: 1,
-    name: "Organik (RO)",
+    name: "Organik",
     price: 7000,
     category: "Ekonomis",
     rahasia: true,
@@ -18,46 +18,46 @@ const products = [
   },
   {
     id: 2,
-    name: "Suli (Pegunungan)",
+    name: "Suli5",
     price: 19000,
     category: "Premium",
     rahasia: false,
     hasPoints: false,
     image: "/suli.jpg",
-    desc: "Air murni TDS 0. Bantu detoks ginjal & kaya oksigen.",
+    desc: "Air murni Nano TDS 0. Bebas Zat padat terlarut, Memperingan kerja ginjal untuk hidup lebih baik.",
     details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan.Bantu detoks ginjal & kaya oksigen."
   },
   {
     id: 3,
-    name: "Deo (Oxy)",
+    name: "Deo Oxygen Water",
     price: 15000,
     category: "Best Seller",
     rahasia: false,
     hasPoints: true,
     image: "/deo.jpg",
-    desc: "Air Oksigen TDS 0. Solusi sehat untuk ginjal.",
-    details: "Air murni dengan kandungan oksigen tinggi dan TDS 0.Solusi sehat untuk ginjal."
+    desc: "Air Oksigen Low TDS, Mendukung kecerdasan otak dan memperingan kerja ginjal. Solusi sehat air minum keluarga",
+    details: "Air murni dengan kandungan oksigen tinggi dan Low TDS.Solusi sehat untuk ginjal."
   },
   {
     id: 4,
-    name: "S+ (Sehat)",
+    name: "S-Plus",
     price: 15000,
     category: "Keluarga",
     rahasia: true,
     hasPoints: false,
     image: "/Splus.jpg",
-    desc: "Air sehat seimbang untuk seluruh keluarga.",
+    desc: "Air Oksigen Low TDS, Mendukung kecerdasan otak dan memperingan kerja ginjal. Solusi sehat air minum keluarga.",
     details: "Keseimbangan pH yang sempurna untuk tubuh. Air sehat seimbang untuk seluruh keluarga. Aman dikonsumsi balita hingga lansia."
   },
   {
     id: 5,
-    name: "Telaga 8+ (Alkaline)",
+    name: "Telaga8+",
     price: 15000,
-    category: "Kesehatan",
+    category: "Air Alkaline",
     rahasia: false,
     hasPoints: false,
     image: "/Telaga8plus.jpg",
-    desc: "pH Tinggi untuk detoksifikasi tubuh.",
+    desc: "Air minum pH tinggi, menetralkan asam bantu detoks alami. Untuk kesehatan lambung.",
     details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung."
   }
 ];
