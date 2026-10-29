@@ -426,19 +426,21 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Kami menyediakan berbagai pilihan air mineral terbaik untuk menjaga pH tubuh, meningkatkan energi, dan memastikan keluarga Anda terhidrasi dengan sempurna.
+            Kami menyediakan berbagai pilihan air minum terbaik untuk menjaga pH tubuh, meningkatkan energi dan memastikan keluarga anda terhidrasi dengan baik
           </p>
-
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 max-w-2xl mx-auto relative overflow-hidden shadow-lg">
-            <h3 className="text-2xl font-extrabold text-yellow-800 mb-2">🎉 Program Loyalitas Pelanggan</h3>
-            <p className="text-yellow-900 mb-4 font-medium">
-              Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong>
-              {bukaRahasia ? <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span> : <span> (seperti Deo Oxy).</span>}
-            </p>
-            <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
-              <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Potongan Rp 15.000! 🎁</span>
+          {/* Program Loyalitas HANYA MUNCUL UNTUK MEMBER */}
+          {statusPembeli === "Member" && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 max-w-2xl mx-auto relative overflow-hidden shadow-lg">
+              <h3 className="text-2xl font-extrabold text-yellow-800 mb-2">🎉 Program Loyalitas Pelanggan</h3>
+              <p className="text-yellow-900 mb-4 font-medium">
+                Dapatkan Poin Digital untuk setiap pembelian produk bertanda <strong>"🎟️ Dapat Poin"</strong>
+                {bukaRahasia ? <span> (seperti Deo Oxy <span className="font-bold text-orange-600">& Organik RO</span>).</span> : <span> (seperti Deo Oxy).</span>}
+              </p>
+              <div className="inline-block bg-white px-8 py-3 rounded-full shadow-md border border-yellow-300">
+                <span className="font-extrabold text-yellow-700 text-lg">10 Poin = Potongan Rp 15.000! 🎁</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
@@ -608,7 +610,6 @@ export default function Home() {
               </div>
             ) : (
               <div className="space-y-6">
-                
                 {/* 1. Daftar Produk yang Dipilih */}
                 <div className="space-y-3">
                   {cart.map((item) => (
@@ -653,18 +654,17 @@ export default function Home() {
                     required
                   />
                   
-                  {/* Margin bawah disesuaikan agar rapi kalau teks poinnya hilang */}
                   <input
                     type="tel"
                     value={noWaPemesan}
                     onChange={(e) => setNoWaPemesan(e.target.value)}
                     placeholder="Nomor WhatsApp (Cth: 081234...)"
-                    className={`w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50 ${bisaTukarPoin ? 'mb-1' : 'mb-3'}`}
+                    className={`w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500 bg-slate-50 ${bisaTukarPoin && statusPembeli === "Member" ? 'mb-1' : 'mb-3'}`}
                     required
                   />
                   
-                  {/* --- INI KUNCINYA: CUMA MUNCUL KALAU ADA PRODUK POIN --- */}
-                  {bisaTukarPoin && (
+                  {/* CUMA MUNCUL KALAU ADA PRODUK POIN & STATUS MEMBER */}
+                  {bisaTukarPoin && statusPembeli === "Member" && (
                     <div className="flex justify-between items-center mb-3">
                       <p className="text-[10px] text-blue-600 italic">*WA ini jadi identitas poin Anda.</p>
                       {noWaPemesan.length >= 10 && (
@@ -685,8 +685,8 @@ export default function Home() {
                   ></textarea>
                 </div>
 
-                {/* 3. Fitur Cek & Tukar Poin (Hanya Muncul Jika Ada Produk Poin) */}
-                {bisaTukarPoin && (
+                {/* 3. Fitur Cek & Tukar Poin (Hanya Muncul Jika Ada Produk Poin & Pembeli adalah Member) */}
+                {bisaTukarPoin && statusPembeli === "Member" && (
                   <div className="bg-[#FFFCE8] p-4 border border-yellow-200 rounded-xl shadow-sm">
                     {/* --- Bagian Cek Poin --- */}
                     <div className="mb-4 border-b border-yellow-200 pb-4">
@@ -765,8 +765,7 @@ export default function Home() {
                   <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
                     <option value="cash">💵 Tunai (COD)</option>
                     <option value="transfer">💳 Transfer Bank / QRIS</option>
-                    
-                    {/* INI KUNCINYA: Opsi Tempo cuma muncul kalau statusnya Member */}
+                    {/* Opsi Tempo cuma muncul kalau statusnya Member */}
                     {statusPembeli === "Member" && (
                       <option value="tempo">📝 Tempo (Khusus Agen)</option>
                     )}
@@ -815,8 +814,8 @@ export default function Home() {
           {/* --- BAGIAN CHECKOUT --- */}
           {cart.length > 0 && (
             <div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
-              {/* Tampilkan info diskon */}
-              {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && (
+              {/* Tampilkan info diskon khusus member */}
+              {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && statusPembeli === "Member" && (
                 <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
                   ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
                 </div>
