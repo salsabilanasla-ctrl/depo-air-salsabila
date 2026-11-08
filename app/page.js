@@ -25,7 +25,7 @@ const products = [
     hasPoints: false,
     image: "/suli.jpg",
     desc: "Air murni Nano TDS 0. Bebas Zat padat terlarut, Memperingan kerja ginjal untuk hidup lebih baik.",
-    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi bebas polutan.Bantu detoks ginjal & kaya oksigen."
+    details: "Air murni (TDS 0) hasil filtrasi berteknologi tinggi, bebas polutan, memperingan kerja ginjal, dan bantu detoks alami."
   },
   {
     id: 3,
@@ -36,7 +36,7 @@ const products = [
     hasPoints: true,
     image: "/deo.jpg",
     desc: "Air Oksigen Low TDS, Mendukung kecerdasan otak dan memperingan kerja ginjal. Solusi sehat air minum keluarga",
-    details: "Air murni dengan kandungan oksigen tinggi dan Low TDS.Solusi sehat untuk ginjal."
+    details: "Air murni Low TDS (+5 PPM) dengan kandungan oksigen by Technology Hydro Magnetizer Vortex untuk hidrasi yang sehat dan Nikmati sensasi kesegaran air minum."
   },
   {
     id: 4,
@@ -58,7 +58,7 @@ const products = [
     hasPoints: false,
     image: "/Telaga8plus.jpg",
     desc: "Air minum pH tinggi, menetralkan asam bantu detoks alami. Untuk kesehatan lambung.",
-    details: "Air Alkaline dengan pH 8+ yang membantu menetralkan asam lambung."
+    details: "Air Alkaline dengan pH 8+ yang stabil, membantu menetralkan asam lambung. 'Sayangi lambung anda dengan air minum pH tinggi Telaga8+'"
   }
 ];
 
@@ -195,7 +195,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [slideImages.length]);
 
-  // Fungsi Tambah/Kurang Item
+  // Fungsi Tambah Item (Sudah ada di kodemu)
   const addToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
     if (existingItem) {
@@ -208,8 +208,16 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
+  // Fungsi Hapus Item (Sudah ada di kodemu)
   const removeFromCart = (productId) => {
     setCart(cart.filter((item) => item.id !== productId));
+  };
+
+  // 👇 TAMBAHKAN FUNGSI INI UNTUK MENGURANGI JUMLAH BARANG 👇
+  const decreaseQty = (productId) => {
+    setCart(cart.map((item) =>
+      item.id === productId && item.qty > 1 ? { ...item, qty: item.qty - 1 } : item
+    ));
   };
 
   // --- CEK APAKAH ADA PRODUK YANG BISA TUKAR POIN DI KERANJANG ---
@@ -477,6 +485,8 @@ export default function Home() {
           <div className="w-full md:w-1/2 space-y-6">
             <h2 className="text-3xl font-bold text-slate-800">Kenapa Harus Rumah Alkaline?</h2>
             <ul className="space-y-6">
+              
+              {/* Poin 1 */}
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
@@ -486,24 +496,47 @@ export default function Home() {
                   <p className="text-slate-600 text-sm md:text-base">Kepuasan Anda adalah prioritas kami. Jika Anda menerima produk dengan kualitas air atau kemasan di bawah standar, kami akan langsung menggantinya dengan yang baru secara GRATIS tanpa syarat ribet!</p>
                 </div>
               </li>
+              
+              {/* Poin 2 */}
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Free ongkir karawang</h3>
-                  <p className="text-slate-600 text-sm md:text-base"> Biar kami yang repot di jalan, Anda tinggal tunggu di rumah! Nikmati layanan pesan antar secepat kilat tanpa biaya tambahan alias Free Ongkir, khusus untuk seluruh wilayah Karawang.</p>
+                  <p className="text-slate-600 text-sm md:text-base"> Biar kami yang repot di jalan, Anda tinggal tunggu di rumah! Nikmati layanan pesan antar tanpa biaya tambahan alias Free Ongkir wilayah Karawang.</p>
                 </div>
               </li>
+              
+              {/* Poin 3 */}
               <li className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Galon Dipinjamkan</h3>
-                  <p className="text-slate-600 text-sm md:text-base">Mau langganan tapi belum punya galon kosong? Tenang saja! Kami meminjamkan galon secara cuma-cuma untuk Anda. Cukup bayar harga airnya saja, dan rasakan kepraktisannya.</p>
+                  <p className="text-slate-600 text-sm md:text-base">Mau order tapi belum punya galon kosong? Tenang saja! Kami meminjamkan galon secara cuma-cuma untuk Anda. Cukup bayar harga airnya saja, dan rasakan kepraktisannya.</p>
                 </div>
               </li>
+
+              {/* Poin 4: KEMUDAHAN TRANSAKSI (BARU) */}
+              <li className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Kemudahan Transaksi</h3>
+                  <p className="text-slate-600 text-sm md:text-base mb-2">Mau order tapi belum punya uang tunai? Tenang saja, kami memudahkan transaksinya, pembayaran air bisa melalui:</p>
+                  <ul className="text-slate-600 text-sm md:text-base list-disc list-inside space-y-1 ml-2 font-medium">
+                    <li>Cash (Tunai)</li>
+                    <li>Transfer BCA: <span className="font-bold text-blue-700">NASOKA 5745025479</span></li>
+                    <li>Dana: <span className="font-bold text-blue-700">0822-5852-1615</span></li>
+                    <li>QRIS</li>
+                    <li><span className="bg-yellow-100 text-yellow-800 px-1 rounded">Bayar Tempo</span> (Awal bulan lunas)</li>
+                  </ul>
+                </div>
+              </li>
+
             </ul>
           </div>
         </div>
@@ -613,9 +646,9 @@ export default function Home() {
                 {/* 1. Daftar Produk yang Dipilih */}
                 <div className="space-y-3">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex gap-4 items-center bg-white border p-3 rounded-lg shadow-sm relative overflow-hidden">
+                    <div key={item.id} className="flex gap-3 items-center bg-white border p-3 rounded-lg shadow-sm relative overflow-hidden">
                       {item.hasPoints && <div className="absolute top-0 left-0 bg-yellow-400 w-1 h-full"></div>}
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover" />
+                      <img src={item.image} alt={item.name} className="w-14 h-14 rounded-md object-cover" />
                       <div className="flex-1">
                         <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1">
                           {item.name}
@@ -623,12 +656,31 @@ export default function Home() {
                         </h4>
                         <p className="text-blue-600 font-bold text-sm">Rp {(item.price * item.qty).toLocaleString('id-ID')}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-600 font-bold text-sm">{item.qty}x</span>
-                        <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 p-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
+                      
+                      {/* --- MODIFIKASI TOMBOL + DAN - --- */}
+<div className="flex flex-col items-end gap-2">
+  <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+    <button 
+      onClick={() => decreaseQty(item.id)}  // <-- UBAH BAGIAN INI
+      className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:text-red-500 font-bold transition-colors"
+    >
+      -
+    </button>
+    <span className="text-slate-800 font-bold text-sm w-7 text-center">{item.qty}</span>
+    <button 
+      onClick={() => addToCart(item)} 
+      className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:text-blue-500 font-bold transition-colors"
+    >
+      +
+    </button>
+  </div>
+  <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 text-xs flex items-center gap-1">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+    Hapus
+  </button>
+</div>
+{/* --------------------------------- */}
+
                     </div>
                   ))}
                 </div>
@@ -637,7 +689,6 @@ export default function Home() {
                 <div className="bg-white p-4 border rounded-xl shadow-sm border-blue-200">
                   <div className="flex items-center gap-2 mb-3">
                     <label className="font-bold text-sm text-gray-800">👤 Data Pengiriman:</label>
-                    {/* Badge Info Member/Baru */}
                     {noWaPemesan.length >= 10 && (
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusPembeli === "Member" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>
                         {statusPembeli === "Member" ? "👑 Member" : "🆕 Baru"}
@@ -663,7 +714,6 @@ export default function Home() {
                     required
                   />
                   
-                  {/* CUMA MUNCUL KALAU ADA PRODUK POIN & STATUS MEMBER */}
                   {bisaTukarPoin && statusPembeli === "Member" && (
                     <div className="flex justify-between items-center mb-3">
                       <p className="text-[10px] text-blue-600 italic">*WA ini jadi identitas poin Anda.</p>
@@ -685,10 +735,9 @@ export default function Home() {
                   ></textarea>
                 </div>
 
-                {/* 3. Fitur Cek & Tukar Poin (Hanya Muncul Jika Ada Produk Poin & Pembeli adalah Member) */}
+                {/* 3. Fitur Cek & Tukar Poin */}
                 {bisaTukarPoin && statusPembeli === "Member" && (
                   <div className="bg-[#FFFCE8] p-4 border border-yellow-200 rounded-xl shadow-sm">
-                    {/* --- Bagian Cek Poin --- */}
                     <div className="mb-4 border-b border-yellow-200 pb-4">
                       <h4 className="font-bold text-sm text-yellow-900 flex items-center gap-1 mb-2">
                         🔍 Cek Tabungan Poin
@@ -711,7 +760,6 @@ export default function Home() {
                         </button>
                       </form>
 
-                      {/* Hasil Cek Poin */}
                       {hasilCekPoin !== null && (
                         <div className={`mt-3 p-3 rounded-lg text-xs border ${hasilCekPoin === false ? "bg-red-50 text-red-700 border-red-200" : "bg-green-50 text-green-800 border-green-200"}`}>
                           {hasilCekPoin === false ? (
@@ -723,7 +771,6 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* --- Bagian Tukar Poin --- */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="font-bold text-sm text-yellow-900 flex items-center gap-2 cursor-pointer" onClick={() => setIsPakaiPoin(!isPakaiPoin)}>
@@ -765,18 +812,15 @@ export default function Home() {
                   <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
                     <option value="cash">💵 Tunai (COD)</option>
                     <option value="transfer">💳 Transfer Bank / QRIS</option>
-                    {/* Opsi Tempo cuma muncul kalau statusnya Member */}
                     {statusPembeli === "Member" && (
                       <option value="tempo">📝 Tempo (Khusus Agen)</option>
                     )}
                   </select>
 
-                  {/* Input kembalian kalau pilih Cash */}
                   {paymentMethod === "cash" && (
                     <input type="text" value={cashNote} onChange={(e) => setCashNote(e.target.value)} placeholder="Butuh kembalian dari uang berapa? (Misal: 50rb)" className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500" />
                   )}
 
-                  {/* KOTAK SUB-PILIHAN KHUSUS JADWAL TEMPO */}
                   {paymentMethod === "tempo" && statusPembeli === "Member" && (
                     <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <label className="font-bold text-xs text-orange-800 block mb-2">🗓️ Pilih Jadwal Bayar:</label>
@@ -814,7 +858,6 @@ export default function Home() {
           {/* --- BAGIAN CHECKOUT --- */}
           {cart.length > 0 && (
             <div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
-              {/* Tampilkan info diskon khusus member */}
               {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && statusPembeli === "Member" && (
                 <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
                   ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
@@ -859,7 +902,7 @@ export default function Home() {
                 Rumah Alkaline <span className="text-blue-500">💧</span>
               </h3>
               <p className="leading-relaxed text-slate-400">
-                Kami berkomitmen menyediakan air minum berkualitas tinggi dengan standar kebersihan terbaik untuk kesehatan keluarga Indonesia.
+                Kami berkomitmen menyediakan air minum berkualitas untuk Anggota Keluarga yang anda sayangi.
               </p>
             </div>
 
