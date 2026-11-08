@@ -812,6 +812,7 @@ export default function Home() {
                   <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
                     <option value="cash">💵 Tunai (COD)</option>
                     <option value="transfer">💳 Transfer Bank / QRIS</option>
+                    <option value="Bayar Tempo">🗓️ Bayar Tempo (Awal Bulan)</option>
                     {statusPembeli === "Member" && (
                       <option value="tempo">📝 Tempo (Khusus Agen)</option>
                     )}
