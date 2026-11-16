@@ -67,6 +67,7 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showQrisModal, setShowQrisModal] = useState(false);
 
   // STATE SLIDER GAMBAR
   const [slideIndex, setSlideIndex] = useState(0);
@@ -256,7 +257,7 @@ export default function Home() {
   const totalAmount = subtotal > nilaiDiskon ? subtotal - nilaiDiskon : 0;
 
   // --- FUNGSI CHECKOUT DENGAN SUPABASE ---
-  const handleCheckout = async () => {
+  const handleCheckout = async (isQrisConfirmed = false) => {
     if (!namaPemesan || !noWaPemesan || !alamatPemesan) {
       alert("Halo! Tolong isi Nama, Nomor WhatsApp, dan Alamat pengiriman dulu ya biar pesanan dan poinnya aman! 🚚💨");
       return;
@@ -266,6 +267,13 @@ export default function Home() {
       alert("Waduh, poin yang ingin ditukar melebihi saldo poin Anda nih! Kurangi jumlahnya ya. 🛑");
       return;
     }
+
+    // --- LOGIKA BARU UNTUK QRIS ---
+    if (paymentMethod === "qris" && !isQrisConfirmed) {
+      setShowQrisModal(true);
+      return; // Berhenti di sini, tampilkan pop-up
+    }
+    // ------------------------------
 
     setIsSubmitting(true);
 
@@ -906,6 +914,46 @@ export default function Home() {
 
 </div>
 </div>
+
+{/* POP-UP MODAL QRIS */}
+      {showQrisModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl relative animate-fade-in-up">
+            <button 
+              onClick={() => setShowQrisModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+            >
+              ✕
+            </button>
+            <h3 className="font-bold text-lg mb-2 text-gray-800">Selesaikan Pembayaran</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Total tagihan Anda: <b>Rp {totalAmount.toLocaleString('id-ID')}</b>
+            </p>
+            
+            <div className="bg-gray-50 p-4 rounded-xl border mb-6 inline-block w-full">
+              <img 
+                src="/qris.jpeg" 
+                alt="QRIS Rumah Alkaline" 
+                className="w-full h-auto object-contain mx-auto" 
+              />
+            </div>
+
+            <p className="text-xs text-orange-600 font-medium mb-4">
+              Pastikan Anda sudah mentransfer sesuai nominal sebelum menekan tombol di bawah.
+            </p>
+
+            <button
+              onClick={() => {
+                setShowQrisModal(false);
+                handleCheckout(true); // Lanjut ke Supabase dan WA
+              }}
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform active:scale-95"
+            >
+              ✅ Saya Sudah Bayar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* --- FOOTER LENGKAP --- */}
       <footer className="bg-slate-900 text-slate-300 py-16 mt-20 rounded-t-[3rem] relative z-10">
