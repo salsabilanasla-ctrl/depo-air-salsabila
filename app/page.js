@@ -442,7 +442,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Kami menyediakan berbagai pilihan air minum terbaik untuk menjaga pH tubuh, meningkatkan energi dan memastikan keluarga anda terhidrasi dengan baik
+            Kami menyediakan berbagai pilihan air minum untuk menjaga pH tubuh, meningkatkan energi dan memastikan keluarga anda terhidrasi dengan baik
           </p>
           {/* Program Loyalitas HANYA MUNCUL UNTUK MEMBER */}
           {statusPembeli === "Member" && (
