@@ -807,90 +807,105 @@ export default function Home() {
                 )}
 
                 {/* 4. Form Metode Pembayaran */}
-                <div className="bg-white p-4 border rounded-xl shadow-sm">
-                  <label className="font-bold text-sm text-gray-800 block mb-2">Pilih Pembayaran:</label>
-                  <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
-                    <option value="cash">💵 Tunai (COD)</option>
-                    <option value="transfer">💳 Transfer Bank / QRIS</option>
-                    <option value="Bayar Tempo">🗓️ Bayar Tempo (Awal Bulan)</option>
-                    {statusPembeli === "Member" && (
-                      <option value="tempo">📝 Tempo (Khusus Agen)</option>
-                    )}
-                  </select>
+<div className="bg-white p-4 border rounded-xl shadow-sm">
+  <label className="font-bold text-sm text-gray-800 block mb-2">Pilih Pembayaran:</label>
+  <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded-lg mb-3 text-sm outline-none focus:border-blue-500">
+    <option value="cash">💵 Tunai (COD)</option>
+    <option value="transfer">💳 Transfer Bank</option>
+    <option value="qris">💳 QRIS</option>
+    <option value="Bayar Tempo">🗓️ Bayar Tempo (Awal Bulan)</option>
+    {statusPembeli === "Member" && (
+      <option value="tempo">📝 Tempo (Khusus Agen)</option>
+    )}
+  </select>
 
-                  {paymentMethod === "cash" && (
-                    <input type="text" value={cashNote} onChange={(e) => setCashNote(e.target.value)} placeholder="Butuh kembalian dari uang berapa? (Misal: 50rb)" className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500" />
-                  )}
+  {/* Tampilan QRIS */}
+  {paymentMethod === "qris" && (
+    <div className="mt-4 p-4 border rounded text-center">
+      <p className="font-semibold mb-2">Scan QRIS di bawah ini untuk membayar:</p>
+      <img 
+        src="/qris.jpeg" 
+        alt="QRIS Rumah Alkaline" 
+        className="mx-auto w-48 h-48 object-contain" 
+      />
+    </div>
+  )}
 
-                  {paymentMethod === "tempo" && statusPembeli === "Member" && (
-                    <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                      <label className="font-bold text-xs text-orange-800 block mb-2">🗓️ Pilih Jadwal Bayar:</label>
-                      <select value={jadwalTempo} onChange={(e) => setJadwalTempo(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-orange-500 bg-white">
-                        <option value="Akhir Minggu (Sabtu/Minggu)">Mingguan (Akhir Minggu - Sabtu/Minggu)</option>
-                        <option value="Sebulan Sekali (Awal/Akhir Bulan)">Bulanan (Sebulan Sekali - Awal/Akhir Bulan)</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+  {/* Input Kembalian Uang Tunai */}
+  {paymentMethod === "cash" && (
+    <input type="text" value={cashNote} onChange={(e) => setCashNote(e.target.value)} placeholder="Butuh kembalian dari uang berapa? (Misal: 50rb)" className="w-full border p-2 mt-2 rounded-lg text-sm outline-none focus:border-blue-500" />
+  )}
 
-                {/* 5. Form Jam Pengantaran */}
-                <div className="bg-white p-4 border rounded-xl shadow-sm">
-                  <label className="font-bold text-sm text-gray-800 block mb-2">Mau Diantar Kapan?</label>
-                  <select value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500">
-                    <option value="Satu Jam Setelah Pemesanan">🚀 Satu Jam Setelah Pemesanan</option>
-                    <option value="08.00 - 09.00">☀️ 08.00 - 09.00</option>
-                    <option value="09.00 - 10.00">☀️ 09.00 - 10.00</option>
-                    <option value="10.00 - 11.00">☀️ 10.00 - 11.00</option>
-                    <option value="11.00 - 12.00">☀️ 11.00 - 12.00</option>
-                    <option value="12.00 - 13.00">☀️ 12.00 - 13.00</option>
-                    <option value="13.00 - 14.00">☀️ 13.00 - 14.00</option>
-                    <option value="14.00 - 15.00">☀️ 14.00 - 15.00</option>
-                    <option value="15.00 - 16.00">🌅 15.00 - 16.00</option>
-                    <option value="16.00 - 17.00">🌅 16.00 - 17.00</option>
-                    <option value="17.00 - 18.00">🌅 17.00 - 18.00</option>
-                    <option value="18.00 - 19.00">🌅 18.00 - 19.00</option>
-                    <option value="19.00 - 20.00">🌅 19.00 - 20.00</option>
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
+  {/* Input Jadwal Bayar Tempo */}
+  {paymentMethod === "tempo" && statusPembeli === "Member" && (
+    <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+      <label className="font-bold text-xs text-orange-800 block mb-2">🗓️ Pilih Jadwal Bayar:</label>
+      <select value={jadwalTempo} onChange={(e) => setJadwalTempo(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-orange-500 bg-white">
+        <option value="Akhir Minggu (Sabtu/Minggu)">Mingguan (Akhir Minggu - Sabtu/Minggu)</option>
+        <option value="Sebulan Sekali (Awal/Akhir Bulan)">Bulanan (Sebulan Sekali - Awal/Akhir Bulan)</option>
+      </select>
+    </div>
+  )}
+</div>
 
-          {/* --- BAGIAN CHECKOUT --- */}
-          {cart.length > 0 && (
-            <div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
-              {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && statusPembeli === "Member" && (
-                <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
-                  ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
-                </div>
-              )}
+{/* 5. Form Jam Pengantaran */}
+<div className="bg-white p-4 border rounded-xl shadow-sm mt-4">
+  <label className="font-bold text-sm text-gray-800 block mb-2">Mau Diantar Kapan?</label>
+  <select value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)} className="w-full border p-2 rounded-lg text-sm outline-none focus:border-blue-500">
+    <option value="Satu Jam Setelah Pemesanan">🚀 Satu Jam Setelah Pemesanan</option>
+    <option value="08.00 - 09.00">☀️ 08.00 - 09.00</option>
+    <option value="09.00 - 10.00">☀️ 09.00 - 10.00</option>
+    <option value="10.00 - 11.00">☀️ 10.00 - 11.00</option>
+    <option value="11.00 - 12.00">☀️ 11.00 - 12.00</option>
+    <option value="12.00 - 13.00">☀️ 12.00 - 13.00</option>
+    <option value="13.00 - 14.00">☀️ 13.00 - 14.00</option>
+    <option value="14.00 - 15.00">☀️ 14.00 - 15.00</option>
+    <option value="15.00 - 16.00">🌅 15.00 - 16.00</option>
+    <option value="16.00 - 17.00">🌅 16.00 - 17.00</option>
+    <option value="17.00 - 18.00">🌅 17.00 - 18.00</option>
+    <option value="18.00 - 19.00">🌅 18.00 - 19.00</option>
+    <option value="19.00 - 20.00">🌅 19.00 - 20.00</option>
+  </select>
+</div>
+</div>
+)}
+</div>
 
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-slate-500 text-sm font-medium">Total ({cart.length} item)</span>
-                <span className="text-xl font-bold text-slate-800">Rp {totalAmount.toLocaleString('id-ID')}</span>
-              </div>
+{/* --- BAGIAN CHECKOUT --- */}
+{cart.length > 0 && (
+<div className="p-5 border-t bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] relative z-10">
+  {isPakaiPoin && nilaiDiskon > 0 && bisaTukarPoin && statusPembeli === "Member" && (
+    <div className="mb-3 text-xs font-bold text-green-600 bg-green-50 p-2 rounded-lg text-center border border-green-200">
+      ✨ Selamat! Anda hemat Rp {nilaiDiskon.toLocaleString('id-ID')}
+    </div>
+  )}
 
-              <button
-                onClick={handleCheckout}
-                disabled={!isTokoBuka || cart.length === 0 || isSubmitting}
-                className={`w-full py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${
-                  isTokoBuka && cart.length > 0 && !isSubmitting
-                    ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"
-                    : "bg-gray-400 cursor-not-allowed text-gray-200"
-                }`}
-              >
-                {!isSubmitting && (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
-                  </svg>
-                )}
-                {isSubmitting ? "Mencatat Pesanan..." : (isTokoBuka ? "Lanjut Pesan via WA" : "Toko Tutup")}
-              </button>
-            </div>
-          )}
+  <div className="flex justify-between items-center mb-4">
+    <span className="text-slate-500 text-sm font-medium">Total ({cart.length} item)</span>
+    <span className="text-xl font-bold text-slate-800">Rp {totalAmount.toLocaleString('id-ID')}</span>
+  </div>
 
-        </div>
-      </div>
+  <button
+    onClick={handleCheckout}
+    disabled={!isTokoBuka || cart.length === 0 || isSubmitting}
+    className={`w-full py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${
+      isTokoBuka && cart.length > 0 && !isSubmitting
+        ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"
+        : "bg-gray-400 cursor-not-allowed text-gray-200"
+    }`}
+  >
+    {!isSubmitting && (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+      </svg>
+    )}
+    {isSubmitting ? "Mencatat Pesanan..." : (isTokoBuka ? "Lanjut Pesan via WA" : "Toko Tutup")}
+  </button>
+</div>
+)}
+
+</div>
+</div>
 
       {/* --- FOOTER LENGKAP --- */}
       <footer className="bg-slate-900 text-slate-300 py-16 mt-20 rounded-t-[3rem] relative z-10">
