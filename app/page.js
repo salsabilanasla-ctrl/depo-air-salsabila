@@ -40,14 +40,14 @@ const products = [
   },
   {
     id: 4,
-    name: "S-Plus",
+    name: "S-Plus Nano Water",
     price: 15000,
     category: "Keluarga",
     rahasia: true,
     hasPoints: false,
     image: "/Splus.jpg",
-    desc: "Air Oksigen Low TDS, Mendukung kecerdasan otak dan memperingan kerja ginjal. Solusi sehat air minum keluarga.",
-    details: "Keseimbangan pH yang sempurna untuk tubuh. Air sehat seimbang untuk seluruh keluarga. Aman dikonsumsi balita hingga lansia."
+    desc: "Kombinasi air nano tds 2 ppm dengan Hydro Magnetizer Vortex, untuk menghasilkan air murni kaya oxygen",
+    details: "Nikmati kesegaran air murni untuk kesehatan keluarga yang anda sayangi."
   },
   {
     id: 5,
