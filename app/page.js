@@ -43,7 +43,7 @@ const products = [
     name: "S-Plus Nano Water",
     price: 15000,
     category: "Keluarga",
-    rahasia: true,
+    rahasia: false,
     hasPoints: false,
     image: "/Splus.jpg",
     desc: "Nikmati kesegaran air murni untuk kesehatan keluarga yang anda sayangi.",
