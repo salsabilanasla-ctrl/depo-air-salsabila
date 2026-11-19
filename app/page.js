@@ -47,7 +47,7 @@ const products = [
     hasPoints: false,
     image: "/Splus.jpg",
     desc: "Nikmati kesegaran air murni untuk kesehatan keluarga yang anda sayangi.",
-    details: "Kombinasi air nano tds 2 ppm dengan Hydro Magnetizer Vortex, untuk menghasilkan air murni kaya oxygen"
+    details: "Kombinasi air nano tds +/- 2 ppm dengan Hydro Magnetizer Vortex, untuk menghasilkan air murni kaya oxygen"
   },
   {
     id: 5,
